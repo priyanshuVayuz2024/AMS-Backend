@@ -8,4 +8,6 @@ const roleSchema = new mongoose.Schema(
     { timestamps: true } // auto adds createdAt & updatedAt
 );
 
-export default mongoose.model("Role", roleSchema);
+const Role = mongoose.model("Role", roleSchema);
+
+export default Role

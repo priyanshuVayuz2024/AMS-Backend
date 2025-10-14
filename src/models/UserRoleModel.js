@@ -13,4 +13,6 @@ const userRoleSchema = new mongoose.Schema(
 // Combination of user + role + entityId must be unique
 userRoleSchema.index({ user: 1, role: 1, entityId: 1 }, { unique: true });
 
-export default mongoose.model("UserRole", userRoleSchema);
+const UserRole = mongoose.model("UserRole", userRoleSchema);
+
+export default UserRole

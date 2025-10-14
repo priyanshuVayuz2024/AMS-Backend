@@ -1,7 +1,7 @@
 import axios from "axios";
 import jwt from "jsonwebtoken";
-import User from "../models/User.js";
 import { sendResponse, sendErrorResponse } from "../util/responseHandler.js";
+import User from "../models/UserModel.js";
 
 const PROFILE_BACKEND_URL = "https://profilebackend.vayuz.com/users/api/signin";
 const JWT_SECRET = process.env.JWT_SECRET || "supersecretkey";
