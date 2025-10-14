@@ -1,8 +1,8 @@
 import axios from "axios";
 import dotenv from "dotenv";
 
-import User from "../models/user.model.js";
 import { connectDB } from "./src/config/db.js";
+import User from "./src/models/UserModel.js";
 
 dotenv.config();
 
@@ -28,8 +28,8 @@ const seedUsers = async () => {
     }
 
     const users = data.data.map((user) => ({
-      socialId: user._id,
-      name: user.fullName || user.name || "Unknown",
+      socialId: user.employee_id,
+      name: user.fullname || user.name || "Unknown",
       email: user.email || "N/A",
       syncedAt: Date.now(),
       isActive: true,
