@@ -62,7 +62,7 @@ export const authorize = (action, entityId = null) => {
       // ✅ User authorized
       next();
     } catch (err) {
-      console.error("Authorization error:", err.message);
+      console.error("Authorization error:", err);
       return sendErrorResponse({
         res,
         statusCode: 500,

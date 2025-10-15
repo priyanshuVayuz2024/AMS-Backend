@@ -1,7 +1,11 @@
+import { sendErrorResponse } from "../util/responseHandler.js";
+
 export const validateRequestData = (schema) => {
   return (req, res, next) => {
     if (!req.body || typeof req.body !== 'object') {
-      return res.status(400).json({
+      return sendErrorResponse({
+        res,
+        statusCode: 400,
         message: "Validation error",
         errors: ["Request body is required and must be a valid JSON object"],
       });
@@ -11,9 +15,11 @@ export const validateRequestData = (schema) => {
 
 
     if (error) {
-      return res.status(400).json({
+      return sendErrorResponse({
+        res,
+        statusCode: 400,
         message: "Validation error",
-        errors: error.details.map((err) => err.message),
+        error: error.details.map((err) => err.message),
       });
     }
     req.body = value; // sanitized input

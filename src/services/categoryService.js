@@ -15,8 +15,24 @@ export const createCategoryService = async (data, adminSocialIds) => {
         userSocialId: id,
     }));
     await addMultiAdminMappings(adminDocs)
-    return category;
-};
+
+
+    for (const socialId of adminSocialIds) {
+        const user = await User.findOne({ socialId });
+        if (user) {
+            await addUserRole({
+                userId: user._id,
+                roleName: "categoryAdmin",
+                entityId: category._id, // scoped to this category
+            });
+        } else {
+            console.warn(`⚠️ User with socialId ${socialId} not found — skipping role assignment`);
+        }
+
+
+
+        return category;
+    };
 
 // export const updateCategoryService = async (id, updates, adminSocialIds) => {
 //     const category = await findCategoryById(id);
