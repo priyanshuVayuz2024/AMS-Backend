@@ -2,6 +2,10 @@ import axios from "axios";
 import jwt from "jsonwebtoken";
 import { sendResponse, sendErrorResponse } from "../util/responseHandler.js";
 import User from "../models/UserModel.js";
+import {
+  getPermissionsByRoleIdService,
+  getUserRoleFromUserRolesService,
+} from "../services/userServices.js";
 
 const PROFILE_BACKEND_URL = "https://profilebackend.vayuz.com/users/api/signin";
 const JWT_SECRET = process.env.JWT_SECRET || "supersecretkey";
@@ -58,6 +62,20 @@ export const login = async (req, res) => {
       await user.save();
     }
 
+    const userRoles = await getUserRoleFromUserRolesService(user._id);
+    const roles = await Promise.all(
+      userRoles.map(async (data) => {
+        const permissions = await getPermissionsByRoleIdService(data.role.id);
+        const permissionArr = permissions.map((data) => data.permission.action);
+        return {
+          role: data.role.name,
+          role_id: data.role.id,
+          permissions: permissionArr,
+        };
+      })
+    );
+    console.log(roles, "roles");
+
     // 🔹 Step 3: Generate JWT
     const token = jwt.sign(
       { id: user._id, socialId: user.socialId },
@@ -78,6 +96,7 @@ export const login = async (req, res) => {
           socialId: user.socialId,
           department: user.department,
         },
+        roles: roles,
       },
     });
   } catch (err) {

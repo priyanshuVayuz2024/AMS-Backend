@@ -1,39 +1,41 @@
+import User from "../models/UserModel.js";
 import { addMultiAdminMappings } from "../repositories/categoryAdminRepo.js";
-import { createCategory, findCategoryById, updateCategoryById } from "../repositories/categoryRepo.js";
-
+import {
+  createCategory,
+  findCategoryById,
+  updateCategoryById,
+} from "../repositories/categoryRepo.js";
 
 export const createCategoryService = async (data, adminSocialIds) => {
+  const category = await createCategory({
+    name: data.name.trim(),
+    description: data.description?.trim(),
+  });
 
-    const category = await createCategory({
-        name: data.name.trim(),
-        description: data.description?.trim(),
-    });
+  // Map admins
+  const adminDocs = adminSocialIds.map((id) => ({
+    categoryId: category._id,
+    userSocialId: id,
+  }));
+  await addMultiAdminMappings(adminDocs);
 
-    // Map admins
-    const adminDocs = adminSocialIds.map((id) => ({
-        categoryId: category._id,
-        userSocialId: id,
-    }));
-    await addMultiAdminMappings(adminDocs)
+  for (const socialId of adminSocialIds) {
+    const user = await User.findOne({ socialId });
+    if (user) {
+      await addUserRole({
+        userId: user._id,
+        roleName: "categoryAdmin",
+        entityId: category._id, // scoped to this category
+      });
+    } else {
+      console.warn(
+        `⚠️ User with socialId ${socialId} not found — skipping role assignment`
+      );
+    }
 
-
-    for (const socialId of adminSocialIds) {
-        const user = await User.findOne({ socialId });
-        if (user) {
-            await addUserRole({
-                userId: user._id,
-                roleName: "categoryAdmin",
-                entityId: category._id, // scoped to this category
-            });
-        } else {
-            console.warn(`⚠️ User with socialId ${socialId} not found — skipping role assignment`);
-        }
-
-
-
-        return category;
-    };
-
+    return category;
+  }
+};
 // export const updateCategoryService = async (id, updates, adminSocialIds) => {
 //     const category = await findCategoryById(id);
 //     if (!category) throw new Error("Category not found.");
@@ -66,4 +68,3 @@ export const createCategoryService = async (data, adminSocialIds) => {
 //     }
 
 //     return updatedCategory;
-// };

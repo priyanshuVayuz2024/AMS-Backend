@@ -46,3 +46,10 @@ export const hasRolePermission = async (roleIds, permissionId) => {
     throw new Error("Failed to check role permission");
   }
 };
+
+export const getPermissionsByRoleIdRepo = async (id) => {
+  const permissions = await RolePermission.find({ role: id }).populate(
+    "permission"
+  );
+  return permissions;
+};
