@@ -1,6 +1,10 @@
 import express from "express";
 import {
   createCategory,
+  getAllCategories,
+  getCategoryById,
+  getMyCategories,
+  updateCategory,
   // getAllCategories,
   // getCategoryById,
   // updateCategory,
@@ -24,13 +28,18 @@ router.post(
 
 
 // // 🔹 Get all Categories
-// router.get("/", authenticate, authorize("category:view"), getAllCategories);
+router.get("/", authenticate, authorize("category:view"), getAllCategories);
 
+router.get("/my", authenticate, authorize("category:view"), getMyCategories);
 // // 🔹 Get Category by ID
-// router.get("/:id", authenticate, authorize("category:view"), getCategoryById);
+router.get("/:id", authenticate, authorize("category:view"), getCategoryById);
 
 // // 🔹 Update Category
-// router.put("/:id", authenticate, authorize("category:update"), updateCategory);
+router.put("/:id", authenticate, authorize("category:update"), updateCategory);
+
+
+
+
 
 // // 🔹 Delete Category
 // router.delete(

@@ -1,4 +1,4 @@
-import { createCategoryService } from "../services/categoryService.js";
+import { createCategoryService, getCategoryByIdService, getMyCategoriesService, listCategoriesService, updateCategoryService } from "../services/categoryService.js";
 import { sendResponse, sendErrorResponse } from "../util/responseHandler.js";
 
 
@@ -24,93 +24,79 @@ export const createCategory = async (req, res) => {
 };
 
 
-// export const updateCategory = async (req, res) => {
-//     try {
-//         const { id } = req.params;
-//         const { name, description, adminSocialIds } = req.body;
+export const updateCategory = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name, description, adminSocialIds } = req.body;
 
-//         // Validate ObjectId
-//         if (!mongoose.Types.ObjectId.isValid(id)) {
-//             return sendErrorResponse({
-//                 res,
-//                 statusCode: 400,
-//                 message: "Invalid category ID",
-//             });
-//         }
+        const category = await updateCategoryService(id, { name, description }, adminSocialIds);
 
-//         // Find existing category
-//         const category = await Category.findById(id);
-//         if (!category) {
-//             return sendErrorResponse({
-//                 res,
-//                 statusCode: 404,
-//                 message: "Category not found",
-//             });
-//         }
-
-//         // Update name and description if provided
-//         if (name) category.name = name.trim();
-//         if (description !== undefined) category.description = description.trim();
-
-//         // Save category updates
-//         await category.save();
-
-//         // 🧠 Handle admin mapping updates (if provided)
-//         if (Array.isArray(adminSocialIds)) {
-//             // 🚫 Validation: at least one admin must be present
-//             if (adminSocialIds.length === 0) {
-//                 return sendErrorResponse({
-//                     res,
-//                     statusCode: 400,
-//                     message: "At least one category admin is required.",
-//                 });
-//             }
-
-//             // Fetch current admins
-//             const existingMappings = await CategoryAdminMapping.find({ categoryId: id });
-//             const existingAdmins = existingMappings.map((m) => m.userSocialId);
-
-//             const newAdmins = adminSocialIds.filter((sid) => !existingAdmins.includes(sid));
-//             const removedAdmins = existingAdmins.filter((sid) => !adminSocialIds.includes(sid));
-
-//             // Add new admin mappings
-//             if (newAdmins.length > 0) {
-//                 const mappingsToAdd = newAdmins.map((socialId) => ({
-//                     categoryId: id,
-//                     userSocialId: socialId,
-//                 }));
-//                 await CategoryAdminMapping.insertMany(mappingsToAdd, { ordered: false });
-//             }
-
-//             // Remove old admin mappings
-//             if (removedAdmins.length > 0) {
-//                 await CategoryAdminMapping.deleteMany({
-//                     categoryId: id,
-//                     userSocialId: { $in: removedAdmins },
-//                 });
-//             }
-//         }
-
-//         return sendResponse({
-//             res,
-//             statusCode: 200,
-//             message: "Category updated successfully",
-//             data: { category },
-//         });
-//     } catch (err) {
-//         console.error("❌ Error updating category:", err.message);
-//         return sendErrorResponse({
-//             res,
-//             statusCode: 500,
-//             message: "Failed to update category",
-//             error: err.message,
-//         });
-//     }
-// };
+        return sendResponse({
+            res,
+            statusCode: 200,
+            message: "Category updated successfully",
+            data: category,
+        });
+    } catch (error) {
+        return sendErrorResponse({
+            res,
+            statusCode: 400,
+            message: error.message || "Failed to update category",
+        });
+    }
+};
 
 
+export const getAllCategories = async (req, res) => {
+    try {
+        const categories = await listCategoriesService({}); // optionally pass filter like { isActive: true }
+        return sendResponse({
+            res,
+            statusCode: 200,
+            message: "Categories fetched successfully",
+            data: categories,
+        });
+    } catch (err) {
+        console.error("List Categories Error:", err.message);
+        return sendErrorResponse({ res, statusCode: 500, message: err.message });
+    }
+};
 
 
+export const getCategoryById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const category = await getCategoryByIdService(id);
+        return sendResponse({
+            res,
+            statusCode: 200,
+            message: "Category fetched successfully",
+            data: category,
+        });
+    } catch (err) {
+        console.error("Get Category By ID Error:", err.message);
+        return sendErrorResponse({ res, statusCode: 404, message: err.message });
+    }
+};
+
+
+export const getMyCategories = async (req, res) => {
+    try {
+        const userSocialId = req.user.socialId; // from authenticate middleware
+
+        const categories = await getMyCategoriesService(userSocialId);
+
+        return sendResponse({
+            res,
+            statusCode: 200,
+            message: "Fetched your categories",
+            data: categories,
+        });
+    } catch (err) {
+        console.error("Get My Categories Error:", err.message);
+        return sendErrorResponse({ res, statusCode: 500, message: err.message });
+    }
+};
 
 
 // export const updateCategoryStatus = async (req, res) => {
