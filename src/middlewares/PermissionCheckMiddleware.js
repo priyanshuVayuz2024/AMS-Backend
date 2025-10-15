@@ -1,13 +1,9 @@
-import Permission from "../models/PermissionModel.js";
-import Role from "../models/RoleModel.js";
-import RolePermission from "../models/RolePermissionModel.js";
-import UserRole from "../models/UserRoleModel.js";
 import { sendErrorResponse } from "../util/responseHandler.js";
 import {
   findUserRolesByUserIdAndEntityId,
   getPermissionByAction,
   hasRolePermission,
-} from "../repositories/rolePermissionRepositories.js";
+} from "../repositories/rolePermissionRepo.js";
 
 export const authorize = (action, entityId = null) => {
   return async (req, res, next) => {

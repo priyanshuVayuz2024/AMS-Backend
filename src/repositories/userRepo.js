@@ -40,6 +40,26 @@ export const assignRoleToUsers = async (
   );
 
   await Promise.all(ops);
+
+  return true;
+};
+
+
+
+export const removeRoleFromUsers = async (userSocialIds, roleName, entityId = null) => {
+  if (!Array.isArray(userSocialIds) || userSocialIds.length === 0) return;
+
+  const role = await Role.findOne({ name: roleName });
+  if (!role) throw new Error(`Role "${roleName}" not found`);
+
+  const users = await User.find({ socialId: { $in: userSocialIds } });
+  if (users.length === 0) return;
+
+  const ops = users.map(user =>
+    UserRole.deleteOne({ user: user._id, role: role._id, entityId })
+  );
+
+  await Promise.all(ops);
   return true;
 };
 
