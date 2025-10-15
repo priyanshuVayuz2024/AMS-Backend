@@ -1,4 +1,4 @@
-import { getPermissionsByRoleIdRepo } from "../repositories/rolePermissionRepositories.js";
+import { getPermissionsByRoleIdRepo } from "../repositories/rolePermissionRepo.js";
 import {
   findUserByIdRepo,
   getUserRoleFromUserRolesRepo,
