@@ -21,7 +21,7 @@ router.post(
   validateRequestData(categoryValidationSchema),
   createCategory
 );
-router.get("/", (req, res) => res.send('hi'));
+
 
 // // 🔹 Get all Categories
 // router.get("/", authenticate, authorize("category:view"), getAllCategories);
