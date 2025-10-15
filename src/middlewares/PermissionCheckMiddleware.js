@@ -27,7 +27,7 @@ export const authorize = (action, entityId = null) => {
             }
 
             // 2️⃣ Find all roles of the user (with optional entityId context)
-            const userRoles = await UserRole.find({
+            const userRoles = await UserRole.find({      
                 user: userId,
                 ...(entityId && { entityId }),
             }).populate("role");
