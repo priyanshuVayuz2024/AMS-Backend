@@ -1,6 +1,5 @@
 import jwt from "jsonwebtoken";
 import { sendErrorResponse } from "../util/responseHandler.js";
-import User from "../models/User.js";
 import { findUserById } from "../repositories/userRepo.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || "supersecretkey";

@@ -1,6 +1,7 @@
-import UserRole from "../models/UserRole.js";
-import RolePermission from "../models/RolePermission.js";
-import Permission from "../models/Permission.js";
+import Permission from "../models/PermissionModel.js";
+import Role from "../models/RoleModel.js";
+import RolePermission from "../models/RolePermissionModel.js";
+import UserRole from "../models/UserRoleModel.js";
 import { sendErrorResponse } from "../util/responseHandler.js";
 import {
   findUserRolesByUserIdAndEntityId,
@@ -61,7 +62,7 @@ export const authorize = (action, entityId = null) => {
       // ✅ User authorized
       next();
     } catch (err) {
-      console.error("Authorization error:", err.message);
+      console.error("Authorization error:", err);
       return sendErrorResponse({
         res,
         statusCode: 500,

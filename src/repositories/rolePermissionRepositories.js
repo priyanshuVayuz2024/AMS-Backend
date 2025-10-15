@@ -1,14 +1,14 @@
-import Permission from "../models/PermissionModel";
-import Role from "../models/RoleModel";
-import RolePermission from "../models/RolePermissionModel";
-import UserRole from "../models/UserRoleModel";
+import Permission from "../models/PermissionModel.js";
+import Role from "../models/RoleModel.js";
+import RolePermission from "../models/RolePermissionModel.js";
+import UserRole from "../models/UserRoleModel.js";
 
 export const getPermissionById = async (id) => {
   return await Permission.findById(id);
 };
 
 export const getPermissionByAction = async (action) => {
-  return await Permission.findOne(action);
+  return await Permission.findOne({ action });
 };
 
 export const getRoleById = async (id) => {
