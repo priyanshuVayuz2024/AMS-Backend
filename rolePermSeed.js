@@ -15,6 +15,16 @@ const seed = async () => {
         await mongoose.connect(MONGO_URI);
         console.log("✅ Connected to MongoDB");
 
+        // 🧹 --- 0️⃣ Cleanup Existing Data ---
+        console.log("🧹 Clearing old roles, permissions, and mappings...");
+        await Promise.all([
+            Role.deleteMany({}),
+            Permission.deleteMany({}),
+            RolePermission.deleteMany({}),
+            UserRole.deleteMany({}), // optional — keeps clean state for roles
+        ]);
+        console.log("✅ Cleared existing role & permission data");
+
         // --- 1️⃣ Define Roles ---
         const roles = [
             { name: "admin", description: "Has full access to all modules" },
@@ -51,34 +61,26 @@ const seed = async () => {
             { action: "item:delete", description: "Delete items" },
         ];
 
-        // --- 3️⃣ Upsert Roles ---
+        // --- 3️⃣ Insert Roles ---
         const roleDocs = {};
         for (const role of roles) {
-            const doc = await Role.findOneAndUpdate(
-                { name: role.name },
-                role,
-                { upsert: true, new: true }
-            );
+            const doc = await Role.create(role);
             roleDocs[role.name] = doc;
         }
 
-        // --- 4️⃣ Upsert Permissions ---
+        // --- 4️⃣ Insert Permissions ---
         const permissionDocs = {};
         for (const perm of permissions) {
-            const doc = await Permission.findOneAndUpdate(
-                { action: perm.action },
-                perm,
-                { upsert: true, new: true }
-            );
+            const doc = await Permission.create(perm);
             permissionDocs[perm.action] = doc;
         }
 
-        // --- 5️⃣ Role-Permission Hierarchy Mapping ---
+        // --- 5️⃣ Define Role-Permission Hierarchy ---
         const rolePermissionsMap = {
-            admin: Object.keys(permissionDocs),
+            admin: Object.keys(permissionDocs), // all permissions
 
             categoryAdmin: [
-                "category:create", "category:view", "category:update", "category:delete",
+                "category:view", "category:update",
                 "subCategory:create", "subCategory:view", "subCategory:update", "subCategory:delete",
                 "group:create", "group:view", "group:update", "group:delete",
             ],
@@ -97,18 +99,17 @@ const seed = async () => {
             itemUser: ["item:view", "item:update", "item:create"],
         };
 
-        // --- 6️⃣ Upsert Role-Permission Mappings ---
+        // --- 6️⃣ Create Role-Permission Mappings ---
         for (const [roleName, actions] of Object.entries(rolePermissionsMap)) {
             const role = roleDocs[roleName];
             for (const action of actions) {
                 const permission = permissionDocs[action];
                 if (!permission) continue;
 
-                await RolePermission.findOneAndUpdate(
-                    { role: role._id, permission: permission._id },
-                    { role: role._id, permission: permission._id },
-                    { upsert: true, new: true }
-                );
+                await RolePermission.create({
+                    role: role._id,
+                    permission: permission._id,
+                });
             }
         }
 
@@ -116,8 +117,8 @@ const seed = async () => {
 
         // --- 7️⃣ Assign Admin Role to Specific Users ---
         const adminRole = roleDocs["admin"];
+        const adminSocialIds = ["I10201"];
 
-        const adminSocialIds = ["I10201", "I10205"];
         const adminUsers = await User.find({ socialId: { $in: adminSocialIds } });
 
         if (adminUsers.length === 0) {
@@ -136,7 +137,7 @@ const seed = async () => {
         console.log("🎉 Seeding completed successfully!");
         process.exit(0);
     } catch (err) {
-        console.error("❌ Seeding Error:", err.message);
+        console.error("❌ Seeding Error:", err);
         process.exit(1);
     }
 };

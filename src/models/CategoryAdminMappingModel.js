@@ -18,4 +18,7 @@ const categoryAdminMappingSchema = new mongoose.Schema(
 // Ensure a user is not mapped twice to the same category
 categoryAdminMappingSchema.index({ categoryId: 1, userSocialId: 1 }, { unique: true });
 
-export default mongoose.model("CategoryAdminMapping", categoryAdminMappingSchema);
+
+const CategoryAdminMapping = mongoose.model("CategoryAdminMapping", categoryAdminMappingSchema);
+
+export default CategoryAdminMapping

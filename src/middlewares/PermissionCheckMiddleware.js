@@ -1,7 +1,10 @@
-import UserRole from "../models/UserRole.js";
-import RolePermission from "../models/RolePermission.js";
-import Permission from "../models/Permission.js";
+import Permission from "../models/PermissionModel.js";
+import Role from "../models/RoleModel.js";
+import RolePermission from "../models/RolePermissionModel.js";
+import UserRole from "../models/UserRoleModel.js";
 import { sendErrorResponse } from "../util/responseHandler.js";
+
+
 
 export const authorize = (action, entityId = null) => {
     return async (req, res, next) => {
@@ -27,10 +30,15 @@ export const authorize = (action, entityId = null) => {
             }
 
             // 2️⃣ Find all roles of the user (with optional entityId context)
-            const userRoles = await UserRole.find({      
+            const userRoles = await UserRole.find({
                 user: userId,
                 ...(entityId && { entityId }),
             }).populate("role");
+
+
+
+            console.log(userRoles, 'useee');
+
 
             if (!userRoles.length) {
                 return sendErrorResponse({
@@ -42,6 +50,15 @@ export const authorize = (action, entityId = null) => {
 
             // 3️⃣ Check if any role has the required permission
             const roleIds = userRoles.map((ur) => ur.role._id);
+
+
+            const permm = await RolePermission.find({
+                role: { $in: roleIds },
+            }).populate("permission");
+
+            console.log(permm, 'meee');
+
+
 
             const hasPermission = await RolePermission.exists({
                 role: { $in: roleIds },
@@ -60,7 +77,7 @@ export const authorize = (action, entityId = null) => {
             next();
 
         } catch (err) {
-            console.error("Authorization error:", err.message);
+            console.error("Authorization error:", err);
             return sendErrorResponse({
                 res,
                 statusCode: 500,
