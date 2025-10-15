@@ -13,6 +13,11 @@ export const updateCategoryById = async (id, updateData) => {
     return await Category.findByIdAndUpdate(id, updateData, { new: true });
 };
 
+
+export const findCategoryByName = async (name) => {
+    return await Category.findOne({ name: new RegExp(`^${name}$`, "i") });
+};
+
 export const deleteCategoryById = async (id) => {
     return await Category.findByIdAndDelete(id);
 };

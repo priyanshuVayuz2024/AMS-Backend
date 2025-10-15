@@ -1,47 +1,35 @@
-<<<<<<< HEAD
 import { createCategoryService, getCategoryByIdService, getMyCategoriesService, listCategoriesService, updateCategoryService } from "../services/categoryService.js";
-=======
-import { createCategoryService } from "../services/categoryService.js";
-import { createCategoryService } from "../services/categoryService.js";
->>>>>>> bf4f116a175e4561045781d50cc99b6d78064fb7
 import { sendResponse, sendErrorResponse } from "../util/responseHandler.js";
 
 export const createCategory = async (req, res) => {
-  try {
-    const { name, description, adminSocialIds } = req.body;
+    try {
+        const { name, description, adminSocialIds } = req.body;
 
-    const category = await createCategoryService(
-      { name, description },
-      adminSocialIds
-    );
+        const category = await createCategoryService(
+            { name, description },
+            adminSocialIds
+        );
 
-    return sendResponse({
-      res,
-      statusCode: 201,
-      message: "Category created successfully",
-      data: category,
-    });
-  } catch (error) {
-    return sendErrorResponse({
-      res,
-      statusCode: 400,
-      message: error.message || "Failed to create category",
-    });
-  }
+        return sendResponse({
+            res,
+            statusCode: 201,
+            message: "Category created successfully",
+            data: category,
+        });
+    } catch (error) {
+        return sendErrorResponse({
+            res,
+            statusCode: 400,
+            message: error.message || "Failed to create category",
+        });
+    }
 };
 
-<<<<<<< HEAD
 
 export const updateCategory = async (req, res) => {
     try {
         const { id } = req.params;
         const { name, description, adminSocialIds } = req.body;
-=======
-// export const updateCategory = async (req, res) => {
-//     try {
-//         const { id } = req.params;
-//         const { name, description, adminSocialIds } = req.body;
->>>>>>> bf4f116a175e4561045781d50cc99b6d78064fb7
 
         const category = await updateCategoryService(id, { name, description }, adminSocialIds);
 

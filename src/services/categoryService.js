@@ -8,6 +8,7 @@ import {
 import {
     createCategory,
     findCategoryById,
+    findCategoryByName,
     getAllCategories,
     getMyCategories,
     updateCategoryById
@@ -20,6 +21,12 @@ const ENTITY_TYPE = "Category"; // constant for this service
 export const createCategoryService = async (data, adminSocialIds) => {
     if (!data.name || data.name.trim() === "") throw new Error("Category name is required.");
     if (!adminSocialIds || adminSocialIds.length === 0) throw new Error("At least one category admin is required.");
+
+    const trimmedName = data.name.trim();
+
+    const existing = await findCategoryByName(trimmedName);
+    if (existing) throw new Error("Category name already exists.");
+
 
     const category = await createCategory({
         name: data.name.trim(),
@@ -43,6 +50,14 @@ export const createCategoryService = async (data, adminSocialIds) => {
 export const updateCategoryService = async (id, updates, adminSocialIds) => {
     const category = await findCategoryById(id);
     if (!category) throw new Error("Category not found.");
+
+
+    const newName = updates.name?.trim();
+    if (newName && newName !== category.name) {
+        const existing = await findCategoryByName(newName);
+        if (existing) throw new Error("Category name already exists.");
+    }
+
 
     // Update main fields
     const updatedCategory = await updateCategoryById(id, {
