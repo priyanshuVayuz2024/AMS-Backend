@@ -26,7 +26,6 @@ router.post(
   createCategory
 );
 
-
 // // 🔹 Get all Categories
 router.get("/", authenticate, authorize("category:view"), getAllCategories);
 
