@@ -5,7 +5,7 @@ export const createCategory = async (req, res) => {
   try {
     const { name, description, adminSocialIds } = req.body;
 
-    const category = await createCategoryService(
+    const { category, message } = await createCategoryService(
       { name, description },
       adminSocialIds
     );
@@ -13,7 +13,7 @@ export const createCategory = async (req, res) => {
     return sendResponse({
       res,
       statusCode: 201,
-      message: "Category created successfully",
+      message: message || "Category created successfully",
       data: category,
     });
   } catch (error) {
@@ -31,12 +31,12 @@ export const updateCategory = async (req, res) => {
     const { id } = req.params;
     const { name, description, adminSocialIds } = req.body;
 
-    const category = await updateCategoryService(id, { name, description }, adminSocialIds);
+    const { updatedCategory: category, message } = await updateCategoryService(id, { name, description }, adminSocialIds);
 
     return sendResponse({
       res,
       statusCode: 200,
-      message: "Category updated successfully",
+      message: message || "Category updated successfully",
       data: category,
     });
   } catch (error) {

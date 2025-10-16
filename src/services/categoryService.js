@@ -42,16 +42,16 @@ export const createCategoryService = async (data, adminSocialIds) => {
     await addMultiAdminMappings(adminDocs);
 
     // Assign categoryAdmin role to these users
-    await assignRoleToUsers(adminSocialIds, "categoryAdmin", category._id);
+    let message = await assignRoleToUsers(adminSocialIds, "categoryAdmin", category._id);
 
-    return category;
+    return { category, message };
 };
 
 export const updateCategoryService = async (id, updates, adminSocialIds) => {
     const category = await findCategoryById(id);
     if (!category) throw new Error("Category not found.");
 
-
+    let message = null
     const newName = updates.name?.trim();
     if (newName && newName !== category.name) {
         const existing = await findCategoryByName(newName);
@@ -82,7 +82,7 @@ export const updateCategoryService = async (id, updates, adminSocialIds) => {
         // 1️⃣ Add new admin mappings and roles
         if (newAdmins.length > 0) {
             await Promise.all(newAdmins.map((id) => addAdminMapping(category._id, ENTITY_TYPE, id)));
-            await assignRoleToUsers(newAdmins, "categoryAdmin", category._id);
+            message = await assignRoleToUsers(newAdmins, "categoryAdmin", category._id);
         }
 
         // 2️⃣ Remove admin mappings and roles
@@ -92,7 +92,7 @@ export const updateCategoryService = async (id, updates, adminSocialIds) => {
         }
     }
 
-    return updatedCategory;
+    return { updatedCategory, message };
 };
 
 export const listCategoriesService = async (filter = {}) => {

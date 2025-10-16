@@ -15,6 +15,9 @@ export const assignRoleToUsers = async (
     throw new Error("At least one user socialId is required.");
   }
 
+
+  let message = null
+
   // 1️⃣ Find the role
   const role = await Role.findOne({ name: roleName });
   if (!role) {
@@ -28,6 +31,7 @@ export const assignRoleToUsers = async (
   const missingIds = userSocialIds.filter((id) => !foundSocialIds.includes(id));
   if (missingIds.length) {
     console.warn(`⚠️ Users not found for socialIds: ${missingIds.join(", ")}`);
+    message = `Users not found for socialIds: ${missingIds.join(", ")}`
   }
 
   // 3️⃣ Upsert UserRole mappings
@@ -41,7 +45,7 @@ export const assignRoleToUsers = async (
 
   await Promise.all(ops);
 
-  return true;
+  return message;
 };
 
 
