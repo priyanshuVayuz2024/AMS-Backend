@@ -2,7 +2,7 @@ import {
     addAdminMapping,
     addMultiAdminMappings,
     removeAdminMappings,
-    getAdminsForEntity
+    getAdminsForEntity,
 } from "../repositories/entityAdminRepo.js";
 
 import {
@@ -14,7 +14,10 @@ import {
     updateCategoryById
 } from "../repositories/categoryRepo.js";
 
-import { assignRoleToUsers, removeRoleFromUsers } from "../repositories/userRepo.js";
+import {
+    assignRoleToUsers,
+    removeRoleFromUsers,
+} from "../repositories/userRepo.js";
 
 const ENTITY_TYPE = "Category"; // constant for this service
 
@@ -70,11 +73,13 @@ export const updateCategoryService = async (id, updates, adminSocialIds) => {
         if (adminSocialIds.length === 0)
             throw new Error("At least one category admin is required.");
 
-        const existingAdmins = (await getAdminsForEntity(category._id, ENTITY_TYPE)).map(
-            (a) => a.userSocialId
-        );
+        const existingAdmins = (
+            await getAdminsForEntity(category._id, ENTITY_TYPE)
+        ).map((a) => a.userSocialId);
 
-        const newAdmins = adminSocialIds.filter((id) => !existingAdmins.includes(id));
+        const newAdmins = adminSocialIds.filter(
+            (id) => !existingAdmins.includes(id)
+        );
         const removedAdmins = existingAdmins.filter(
             (id) => !adminSocialIds.includes(id)
         );

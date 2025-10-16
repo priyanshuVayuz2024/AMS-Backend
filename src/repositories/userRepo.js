@@ -48,9 +48,11 @@ export const assignRoleToUsers = async (
   return message;
 };
 
-
-
-export const removeRoleFromUsers = async (userSocialIds, roleName, entityId = null) => {
+export const removeRoleFromUsers = async (
+  userSocialIds,
+  roleName,
+  entityId = null
+) => {
   if (!Array.isArray(userSocialIds) || userSocialIds.length === 0) return;
 
   const role = await Role.findOne({ name: roleName });
@@ -59,7 +61,7 @@ export const removeRoleFromUsers = async (userSocialIds, roleName, entityId = nu
   const users = await User.find({ socialId: { $in: userSocialIds } });
   if (users.length === 0) return;
 
-  const ops = users.map(user =>
+  const ops = users.map((user) =>
     UserRole.deleteOne({ user: user._id, role: role._id, entityId })
   );
 
@@ -68,5 +70,5 @@ export const removeRoleFromUsers = async (userSocialIds, roleName, entityId = nu
 };
 
 export const getUserRoleFromUserRolesRepo = async (id) => {
-  return await UserRole.find({ user: id }).populate("role");
+  return await UserRole.find({ user: id }).populate("role").populate("user");
 };
