@@ -1,4 +1,4 @@
-import { createCategoryService } from "../services/categoryService.js";
+import { createCategoryService, getCategoryByIdService, getMyCategoriesService, listCategoriesService, updateCategoryService } from "../services/categoryService.js";
 import { sendResponse, sendErrorResponse } from "../util/responseHandler.js";
 
 export const createCategory = async (req, res) => {
@@ -25,16 +25,13 @@ export const createCategory = async (req, res) => {
   }
 };
 
+
 export const updateCategory = async (req, res) => {
   try {
     const { id } = req.params;
     const { name, description, adminSocialIds } = req.body;
 
-    const category = await updateCategoryService(
-      id,
-      { name, description },
-      adminSocialIds
-    );
+    const category = await updateCategoryService(id, { name, description }, adminSocialIds);
 
     return sendResponse({
       res,
