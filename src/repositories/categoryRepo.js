@@ -22,14 +22,20 @@ export const deleteCategoryById = async (id) => {
     return await Category.findByIdAndDelete(id);
 };
 
-export const getAllCategories = async () => {
-    return await Category.find().sort({ createdAt: -1 });
+export const getAllCategories = async (filter = {}, { page = 1, limit = 10 } = {}) => {
+    const skip = (page - 1) * limit;
+
+    const [data, total] = await Promise.all([
+        Category.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
+        Category.countDocuments(filter),
+    ]);
+
+    return { data, total };
 };
 
 
-
-export const getMyCategories = async (userSocialId) => {
-    // Find all mappings for categories
+export const getMyCategories = async (userSocialId, filter = {}, { page = 1, limit = 10 } = {}) => {
+    // Find all mappings where user is admin for categories
     const mappings = await EntityAdminMapping.find({
         userSocialId,
         entityType: "Category",
@@ -37,10 +43,19 @@ export const getMyCategories = async (userSocialId) => {
 
     const categoryIds = mappings.map((m) => m.entityId);
 
-    if (categoryIds.length === 0) return [];
+    if (categoryIds.length === 0) {
+        return { data: [], total: 0 };
+    }
 
-    // Fetch categories by IDs
-    const categories = await Category.find({ _id: { $in: categoryIds } }).sort({ createdAt: -1 });
+    // 🔹 Add category ID filter + pagination
+    const skip = (page - 1) * limit;
 
-    return categories;
+    const query = { _id: { $in: categoryIds }, ...filter };
+
+    const [data, total] = await Promise.all([
+        Category.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit),
+        Category.countDocuments(query),
+    ]);
+
+    return { data, total };
 };

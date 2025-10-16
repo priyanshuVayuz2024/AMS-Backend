@@ -1,101 +1,132 @@
-import { createCategoryService, getCategoryByIdService, getMyCategoriesService, listCategoriesService, updateCategoryService } from "../services/categoryService.js";
-import { sendResponse, sendErrorResponse } from "../util/responseHandler.js";
+import {
+  createCategoryService,
+  getCategoryByIdService,
+  getMyCategoriesService,
+  listCategoriesService,
+  updateCategoryService,
+} from "../services/categoryService.js";
+import {
+  sendResponse,
+  sendErrorResponse,
+  tryCatch,
+} from "../util/responseHandler.js";
 
-export const createCategory = async (req, res) => {
-  try {
-    const { name, description, adminSocialIds } = req.body;
+export const createCategory = tryCatch(async (req, res) => {
+  const { name, description, adminSocialIds } = req.body;
 
-    const { category, message } = await createCategoryService(
-      { name, description },
-      adminSocialIds
-    );
+  const { category, message } = await createCategoryService(
+    { name, description },
+    adminSocialIds
+  );
 
-    return sendResponse({
-      res,
-      statusCode: 201,
-      message: message || "Category created successfully",
-      data: category,
-    });
-  } catch (error) {
+  return sendResponse({
+    res,
+    statusCode: 201,
+    message: message || "Category created successfully",
+    data: category,
+  });
+});
+
+export const updateCategory = tryCatch(async (req, res) => {
+  const { id } = req.params;
+  const { name, description, adminSocialIds } = req.body;
+
+  const { updatedCategory: category, message } = await updateCategoryService(
+    id,
+    { name, description },
+    adminSocialIds
+  );
+
+  return sendResponse({
+    res,
+    statusCode: 200,
+    message: message || "Category updated successfully",
+    data: category,
+  });
+});
+
+export const getAllCategories = tryCatch(async (req, res) => {
+  const { page = 1, limit = 10, search = "" } = req.query;
+
+  // 🔹 Validate pagination params
+  const parsedPage = parseInt(page, 10);
+  const parsedLimit = parseInt(limit, 10);
+
+  if (
+    isNaN(parsedPage) ||
+    isNaN(parsedLimit) ||
+    parsedPage <= 0 ||
+    parsedLimit <= 0
+  ) {
     return sendErrorResponse({
       res,
       statusCode: 400,
-      message: error.message || "Failed to create category",
+      message: "Invalid pagination parameters. 'page' and 'limit' must be positive numbers.",
     });
   }
-};
 
+  const result = await listCategoriesService({
+    page: parsedPage,
+    limit: parsedLimit,
+    search: search.trim(),
+  });
 
-export const updateCategory = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { name, description, adminSocialIds } = req.body;
+  return sendResponse({
+    res,
+    statusCode: 200,
+    message: "Categories fetched successfully",
+    data: result.data,
+    meta: result.meta,
+  });
+});
 
-    const { updatedCategory: category, message } = await updateCategoryService(id, { name, description }, adminSocialIds);
+export const getCategoryById = tryCatch(async (req, res) => {
+  const { id } = req.params;
+  const category = await getCategoryByIdService(id);
 
-    return sendResponse({
-      res,
-      statusCode: 200,
-      message: message || "Category updated successfully",
-      data: category,
-    });
-  } catch (error) {
+  return sendResponse({
+    res,
+    statusCode: 200,
+    message: "Category fetched successfully",
+    data: category,
+  });
+});
+
+export const getMyCategories = tryCatch(async (req, res) => {
+  const userSocialId = req.user.socialId;
+  const { page = 1, limit = 10, search = "" } = req.query;
+
+  // 🔹 Validate pagination params
+  const parsedPage = parseInt(page, 10);
+  const parsedLimit = parseInt(limit, 10);
+
+  if (
+    isNaN(parsedPage) ||
+    isNaN(parsedLimit) ||
+    parsedPage <= 0 ||
+    parsedLimit <= 0
+  ) {
     return sendErrorResponse({
       res,
       statusCode: 400,
-      message: error.message || "Failed to update category",
+      message: "Invalid pagination parameters. 'page' and 'limit' must be positive numbers.",
     });
   }
-};
 
-export const getAllCategories = async (req, res) => {
-  try {
-    const categories = await listCategoriesService({}); // optionally pass filter like { isActive: true }
-    return sendResponse({
-      res,
-      statusCode: 200,
-      message: "Categories fetched successfully",
-      data: categories,
-    });
-  } catch (err) {
-    console.error("List Categories Error:", err.message);
-    return sendErrorResponse({ res, statusCode: 500, message: err.message });
-  }
-};
+  const result = await getMyCategoriesService(userSocialId, {
+    page: parsedPage,
+    limit: parsedLimit,
+    search: search.trim(),
+  });
 
-export const getCategoryById = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const category = await getCategoryByIdService(id);
-    return sendResponse({
-      res,
-      statusCode: 200,
-      message: "Category fetched successfully",
-      data: category,
-    });
-  } catch (err) {
-    console.error("Get Category By ID Error:", err.message);
-    return sendErrorResponse({ res, statusCode: 404, message: err.message });
-  }
-};
-
-export const getMyCategories = async (req, res) => {
-  try {
-    const userSocialId = req.user.socialId; // from authenticate middleware
-
-    const categories = await getMyCategoriesService(userSocialId);
-
-    return sendResponse({
-      res,
-      statusCode: 200,
-      message: "Fetched your categories",
-      data: categories,
-    });
-  } catch (err) {
-    console.error("Get My Categories Error:", err.message);
-    return sendErrorResponse({ res, statusCode: 500, message: err.message });
-  }
-};
+  return sendResponse({
+    res,
+    statusCode: 200,
+    message: "Fetched your categories",
+    data: result.data,
+    meta: result.meta,
+  });
+});
 
 // export const updateCategoryStatus = async (req, res) => {
 //     try {

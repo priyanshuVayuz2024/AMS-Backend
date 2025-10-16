@@ -100,9 +100,24 @@ export const updateCategoryService = async (id, updates, adminSocialIds) => {
     return { updatedCategory, message };
 };
 
-export const listCategoriesService = async (filter = {}) => {
-    const categories = await getAllCategories(filter);
-    return categories;
+export const listCategoriesService = async ({ page = 1, limit = 10, search = "" }) => {
+    const filter = {};
+
+    if (search) {
+        filter.name = { $regex: search, $options: "i" }; // case-insensitive partial match
+    }
+
+    const { data, total } = await getAllCategories(filter, { page, limit });
+
+    return {
+        data,
+        meta: {
+            total,
+            page,
+            limit,
+            totalPages: Math.ceil(total / limit),
+        },
+    };
 };
 
 export const getCategoryByIdService = async (categoryId) => {
@@ -111,7 +126,22 @@ export const getCategoryByIdService = async (categoryId) => {
     return category;
 };
 
-export const getMyCategoriesService = async (userSocialId) => {
-    const categories = await getMyCategories(userSocialId);
-    return categories.length ? categories : [];
+export const getMyCategoriesService = async (userSocialId, { page = 1, limit = 10, search = "" }) => {
+    const filter = {};
+
+    if (search) {
+        filter.name = { $regex: search, $options: "i" }; // case-insensitive name search
+    }
+
+    const { data, total } = await getMyCategories(userSocialId, filter, { page, limit });
+
+    return {
+        data,
+        meta: {
+            total,
+            page,
+            limit,
+            totalPages: Math.ceil(total / limit),
+        },
+    };
 };
