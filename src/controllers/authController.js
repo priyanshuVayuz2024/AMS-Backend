@@ -6,6 +6,8 @@ import {
   getPermissionsByRoleIdService,
   getUserRoleFromUserRolesService,
 } from "../services/userServices.js";
+import { getEntitiesFromEntityAdminMappingServiceBySocialIdAndEntityId } from "../services/entityAdminMappingService.js";
+import mongoose from "mongoose";
 
 const PROFILE_BACKEND_URL = "https://profilebackend.vayuz.com/users/api/signin";
 const JWT_SECRET = process.env.JWT_SECRET || "supersecretkey";
@@ -31,8 +33,6 @@ export const login = async (req, res) => {
       password: authenticationCode,
       requestfrom: "social",
     });
-
-    console.log(data, "daaaa");
 
     if (!data && data.status != 200) {
       return sendErrorResponse({
@@ -63,20 +63,57 @@ export const login = async (req, res) => {
     }
 
     const userRoles = await getUserRoleFromUserRolesService(user._id);
-    const roles = await Promise.all(
-      userRoles.map(async (data) => {
-        const permissions = await getPermissionsByRoleIdService(data.role.id);
-        const permissionArr = permissions.map((data) => data.permission.action);
-        return {
-          role: data.role.name,
-          role_id: data.role.id,
-          permissions: permissionArr,
-        };
-      })
-    );
-    console.log(roles, "roles");
+    console.log(userRoles);
+    // Group userRoles by roleId
+    const roleMap = new Map();
 
-    // 🔹 Step 3: Generate JWT
+    for (const ur of userRoles) {
+      const roleId = ur.role._id.toString();
+
+      if (!roleMap.has(roleId)) {
+        roleMap.set(roleId, {
+          role: ur.role.name,
+          roleId: roleId,
+          permissions: [], // filled later
+          entities: [],
+        });
+      }
+
+      // Fetch entity if exists
+      if (ur.entityId) {
+        const entityMapping =
+          await getEntitiesFromEntityAdminMappingServiceBySocialIdAndEntityId(
+            ur.entityId,
+            user.socialId
+          );
+
+        if (entityMapping) {
+          const Model = mongoose.model(entityMapping.entityType);
+          const entityData = await Model.findById(entityMapping.entityId);
+
+          if (entityData) {
+            const roleObj = roleMap.get(roleId);
+
+            // avoid duplicate entities
+            if (!roleObj.entities.some((e) => e.id.equals(entityData._id))) {
+              roleObj.entities.push({
+                id: entityData._id,
+                name: entityData.name,
+              });
+            }
+          }
+        }
+      }
+    }
+
+    // Add permissions for each role
+    for (const [roleId, roleObj] of roleMap.entries()) {
+      const permissions = await getPermissionsByRoleIdService(roleId);
+      roleObj.permissions = permissions.map((p) => p.permission.action);
+    }
+
+    const roles = Array.from(roleMap.values());
+
     const token = jwt.sign(
       { id: user._id, socialId: user.socialId },
       JWT_SECRET,
@@ -96,7 +133,7 @@ export const login = async (req, res) => {
           socialId: user.socialId,
           department: user.department,
         },
-        roles: roles,
+        roles,
       },
     });
   } catch (err) {

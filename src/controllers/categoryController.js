@@ -1,5 +1,4 @@
 import { createCategoryService } from "../services/categoryService.js";
-import { createCategoryService } from "../services/categoryService.js";
 import { sendResponse, sendErrorResponse } from "../util/responseHandler.js";
 
 export const createCategory = async (req, res) => {
