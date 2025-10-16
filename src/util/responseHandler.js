@@ -24,6 +24,7 @@ const sendErrorResponse = ({
 const createError = (statusCode, message) => {
   const error = new Error(message);
   error.statusCode = statusCode;
+  console.log(error, "error");
   return error;
 };
 
@@ -49,7 +50,7 @@ export const errorHandler = (err, req, res, next) => {
     res,
     statusCode,
     message,
-    error: err?.stack, // optional: hide stack in prod
+    // error: err?.stack, // optional: hide stack in prod
   });
 };
 
