@@ -5,10 +5,6 @@ import {
   getCategoryById,
   getMyCategories,
   updateCategory,
-  // getAllCategories,
-  // getCategoryById,
-  // updateCategory,
-  // deleteCategory,
 } from "../controllers/categoryController.js";
 import { authenticate } from "../middlewares/AuthMiddleware.js";
 import { authorize } from "../middlewares/PermissionCheckMiddleware.js";
