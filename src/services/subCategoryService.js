@@ -2,6 +2,7 @@ import { addMultiAdminMappings } from "../repositories/entityAdminRepo.js";
 import {
   createSubCategoryRepo,
   findSubCategoryByNameAndCategoryRepo,
+  getAllSubCategoriesRepo,
   getSubCategoryByIdRepo,
 } from "../repositories/subCategoryRepo.js";
 import { assignRoleToUsers } from "../repositories/userRepo.js";
@@ -56,4 +57,34 @@ export const createSubCategoryService = async (data) => {
 
 export const getSubCategoryByIdService = async (id) => {
   return await getSubCategoryByIdRepo(id);
+};
+
+export const listSubCategoriesService = async ({
+  page = 1,
+  limit = 10,
+  search = "",
+  categoryId,
+}) => {
+  const filter = {};
+
+  if (search) {
+    filter.name = { $regex: search, $options: "i" }; // case-insensitive partial match
+  }
+  if (categoryId) {
+    filter.categoryId = categoryId;
+  }
+
+  const { data, total } = await getAllSubCategoriesRepo(filter, {
+    page,
+    limit,
+  });
+  return {
+    data,
+    meta: {
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
 };

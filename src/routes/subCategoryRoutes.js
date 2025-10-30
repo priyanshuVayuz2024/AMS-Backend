@@ -5,6 +5,7 @@ import { validateRequestData } from "../middlewares/validateRequestData.js";
 import { createSubCategorySchema } from "../validationSchema/subCategoryValidationSchema.js";
 import {
   createSubCategory,
+  getAllSubCategories,
   getSubCategoryById,
 } from "../controllers/subCategoryController.js";
 
@@ -23,5 +24,12 @@ router.get(
   authenticate,
   authorize("subCategory:view"),
   getSubCategoryById
+);
+
+router.get(
+  "/",
+  authenticate,
+  authorize("subCategory:view"),
+  getAllSubCategories
 );
 export default router;

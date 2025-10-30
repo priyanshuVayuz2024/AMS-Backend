@@ -79,3 +79,16 @@ export const getSubCategoryByIdRepo = async (id) => {
 
   return result[0];
 };
+
+export const getAllSubCategoriesRepo = async (filter = {}, { page, limit }) => {
+  const skip = (page - 1) * limit;
+
+  const data = await SubCategory.find(filter).skip(skip).limit(limit);
+
+  const total = await SubCategory.countDocuments(filter);
+
+  return {
+    data,
+    total,
+  };
+};
