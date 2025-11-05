@@ -117,11 +117,9 @@ export const getMySubCategories = async (userSocialId, filter = {}, { page = 1, 
         entityType: "SubCategory",
     });
 
-    console.log(mappings, "13");
     
     const subCategoryIds = mappings.map((m) => m.entityId);
 
-    console.log(subCategoryIds,"14")
     if (subCategoryIds.length === 0) {
         return { data: [], total: 0 };
     }

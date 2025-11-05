@@ -29,11 +29,12 @@ export const createCategory = tryCatch(async (req, res) => {
 
 export const updateCategory = tryCatch(async (req, res) => {
   const { id } = req.params;
-  const { name, description, adminSocialIds } = req.body;
+  const { name, description, adminSocialIds, isActive } = req.body;
+ 
 
   const { updatedCategory: category, message } = await updateCategoryService(
     id,
-    { name, description },
+    { name, description, isActive },
     adminSocialIds
   );
 
@@ -44,6 +45,8 @@ export const updateCategory = tryCatch(async (req, res) => {
     data: category,
   });
 });
+
+
 
 export const getAllCategories = tryCatch(async (req, res) => {
   const { page = 1, limit = 10, search = "" } = req.query;

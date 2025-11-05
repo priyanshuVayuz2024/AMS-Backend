@@ -21,7 +21,6 @@ export const authenticate = async (req, res, next) => {
     // Verify JWT
     const decoded = jwt.verify(token, JWT_SECRET);
 
-    console.log("Decoded JWT:", decoded);
     // Optional: Fetch user from DB
     const user = await findUserByIdRepo(decoded.id);
     if (!user || !user.isActive) {

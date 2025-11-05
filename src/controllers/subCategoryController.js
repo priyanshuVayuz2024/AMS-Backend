@@ -44,11 +44,11 @@ export const getSubCategoryById = tryCatch(async (req, res) => {
 
 export const updateSubCategory = tryCatch(async (req, res) => {
   const { id } = req.params;
-  const { name, description, adminSocialIds } = req.body;
+  const { name, description, adminSocialIds, isActive } = req.body;
 
   const { updatedSubCategory: subCategory, message } = await updateSubCategoryService(
     id,
-    { name, description },
+    { name, description, isActive },
     adminSocialIds
   );
 

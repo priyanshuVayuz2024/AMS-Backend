@@ -16,10 +16,12 @@ export const authorize = (action, entityId = null) => {
         });
       }
 
-      const userId = req.user.id;
+      const userId = req?.user?.id;
 
       // 1️⃣ Find the permission document
       const permission = await getPermissionByAction(action);
+      console.log(permission, "12");
+      
       if (!permission) {
         return sendErrorResponse({
           res,

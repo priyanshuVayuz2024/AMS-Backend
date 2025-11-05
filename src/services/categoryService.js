@@ -50,25 +50,31 @@ export const createCategoryService = async (data, adminSocialIds) => {
     return { category, message };
 };
 
+
 export const updateCategoryService = async (id, updates, adminSocialIds) => {
     const category = await findCategoryById(id);
     if (!category) throw new Error("Category not found.");
 
-    let message = null
+    let message = null;
+
     const newName = updates.name?.trim();
     if (newName && newName !== category.name) {
         const existing = await findCategoryByName(newName);
         if (existing) throw new Error("Category name already exists.");
     }
 
-
-    // Update main fields
-    const updatedCategory = await updateCategoryById(id, {
+    let updatePayload = {
         name: updates.name?.trim() || category.name,
         description: updates.description?.trim() || category.description,
-    });
+    };
 
-    // Update admin mapping if provided
+
+    if (typeof updates.isActive === "boolean") {
+        updatePayload.isActive = updates.isActive;
+    }
+
+    const updatedCategory = await updateCategoryById(id, updatePayload);
+
     if (Array.isArray(adminSocialIds)) {
         if (adminSocialIds.length === 0)
             throw new Error("At least one category admin is required.");
@@ -84,13 +90,15 @@ export const updateCategoryService = async (id, updates, adminSocialIds) => {
             (id) => !adminSocialIds.includes(id)
         );
 
-        // 1️⃣ Add new admin mappings and roles
+        // Add new admins
         if (newAdmins.length > 0) {
-            await Promise.all(newAdmins.map((id) => addAdminMapping(category._id, ENTITY_TYPE, id)));
+            await Promise.all(newAdmins.map((id) =>
+                addAdminMapping(category._id, ENTITY_TYPE, id)
+            ));
             message = await assignRoleToUsers(newAdmins, "categoryAdmin", category._id);
         }
 
-        // 2️⃣ Remove admin mappings and roles
+        // Remove admins
         if (removedAdmins.length > 0) {
             await removeAdminMappings(category._id, ENTITY_TYPE, removedAdmins);
             await removeRoleFromUsers(removedAdmins, "categoryAdmin", category._id);
@@ -103,8 +111,9 @@ export const updateCategoryService = async (id, updates, adminSocialIds) => {
 export const listCategoriesService = async ({ page = 1, limit = 10, search = "" }) => {
     const filter = {};
 
+    // case-insensitive partial match
     if (search) {
-        filter.name = { $regex: search, $options: "i" }; // case-insensitive partial match
+        filter.name = { $regex: search, $options: "i" }; 
     }
 
     const { data, total } = await getAllCategories(filter, { page, limit });
@@ -129,8 +138,9 @@ export const getCategoryByIdService = async (categoryId) => {
 export const getMyCategoriesService = async (userSocialId, { page = 1, limit = 10, search = "" }) => {
     const filter = {};
 
+    // case-insensitive partial match
     if (search) {
-        filter.name = { $regex: search, $options: "i" }; // case-insensitive name search
+        filter.name = { $regex: search, $options: "i" };
     }
 
     const { data, total } = await getMyCategories(userSocialId, filter, { page, limit });
