@@ -6,13 +6,9 @@ import { createSubCategorySchema } from "../validationSchema/subCategoryValidati
 import {
   createSubCategory,
   getAllSubCategories,
-<<<<<<< HEAD
   getMySubCategories,
   getSubCategoryById,
   updateSubCategory,
-=======
-  getSubCategoryById,
->>>>>>> 615604e9a16e590e1477d1190a5a1a7ba4013a49
 } from "../controllers/subCategoryController.js";
 
 const router = express.Router();
@@ -25,7 +21,6 @@ router.post(
   createSubCategory
 );
 
-<<<<<<< HEAD
 
 router.get(
   "/",
@@ -46,8 +41,6 @@ router.get(
 );
 
 
-=======
->>>>>>> 615604e9a16e590e1477d1190a5a1a7ba4013a49
 router.get(
   "/:id",
   authenticate,
@@ -55,16 +48,7 @@ router.get(
   getSubCategoryById
 );
 
-<<<<<<< HEAD
 
 router.put("/:id", authenticate, authorize("subCategory:update"), updateSubCategory);
 
-=======
-router.get(
-  "/",
-  authenticate,
-  authorize("subCategory:view"),
-  getAllSubCategories
-);
->>>>>>> 615604e9a16e590e1477d1190a5a1a7ba4013a49
 export default router;
