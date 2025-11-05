@@ -21,7 +21,10 @@ export const authenticate = async (req, res, next) => {
     // Verify JWT
     const decoded = jwt.verify(token, JWT_SECRET);
 
+<<<<<<< HEAD
     console.log("Decoded JWT:", decoded);
+=======
+>>>>>>> 615604e9a16e590e1477d1190a5a1a7ba4013a49
     // Optional: Fetch user from DB
     const user = await findUserByIdRepo(decoded.id);
     if (!user || !user.isActive) {
@@ -34,11 +37,19 @@ export const authenticate = async (req, res, next) => {
 
     // Attach user info to request object
     req.user = {
+<<<<<<< HEAD
       id: user?._id,
       socialId: user?.socialId,
       name: user?.name,
       email: user?.email,
       department: user?.department,
+=======
+      id: user._id,
+      socialId: user.socialId,
+      name: user.name,
+      email: user.email,
+      department: user.department,
+>>>>>>> 615604e9a16e590e1477d1190a5a1a7ba4013a49
     };
 
     next(); // proceed to next middleware or route handler

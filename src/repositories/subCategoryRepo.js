@@ -1,6 +1,9 @@
 import mongoose from "mongoose";
 import SubCategory from "../models/SubCategoryModel.js";
+<<<<<<< HEAD
 import EntityAdminMapping from "../models/EntityAdminMappingModel.js";
+=======
+>>>>>>> 615604e9a16e590e1477d1190a5a1a7ba4013a49
 
 export const findSubCategoryByNameAndCategoryRepo = async (
   categoryId,
@@ -22,6 +25,7 @@ export const createSubCategoryRepo = async (data) => {
   return await SubCategory.create(data);
 };
 
+<<<<<<< HEAD
 export const findSubCategoryById = async (id) => {
     return await SubCategory.findById(id);
 };
@@ -35,6 +39,8 @@ export const findSubCategoryByName = async (name) => {
 };
 
 
+=======
+>>>>>>> 615604e9a16e590e1477d1190a5a1a7ba4013a49
 export const getSubCategoryByIdRepo = async (id) => {
   //   return await SubCategory.findById(id).populate("categoryId");
   const objectId = new mongoose.Types.ObjectId(id);
@@ -106,6 +112,7 @@ export const getAllSubCategoriesRepo = async (filter = {}, { page, limit }) => {
     total,
   };
 };
+<<<<<<< HEAD
 
 
 
@@ -138,3 +145,5 @@ export const getMySubCategories = async (userSocialId, filter = {}, { page = 1, 
 
     return { data, total };
 };
+=======
+>>>>>>> 615604e9a16e590e1477d1190a5a1a7ba4013a49

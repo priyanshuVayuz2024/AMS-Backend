@@ -1,9 +1,14 @@
 import {
   createSubCategoryService,
+<<<<<<< HEAD
   getMySubCategoriesService,
   getSubCategoryByIdService,
   listSubCategoriesService,
   updateSubCategoryService,
+=======
+  getSubCategoryByIdService,
+  listSubCategoriesService,
+>>>>>>> 615604e9a16e590e1477d1190a5a1a7ba4013a49
 } from "../services/subCategoryService.js";
 import {
   sendErrorResponse,
@@ -41,6 +46,7 @@ export const getSubCategoryById = tryCatch(async (req, res) => {
   });
 });
 
+<<<<<<< HEAD
 
 export const updateSubCategory = tryCatch(async (req, res) => {
   const { id } = req.params;
@@ -62,6 +68,10 @@ export const updateSubCategory = tryCatch(async (req, res) => {
 
 export const getAllSubCategories = tryCatch(async (req, res) => {
   const { page = 1, limit = 10, search = "", subCategoryId = "" } = req.query;
+=======
+export const getAllSubCategories = tryCatch(async (req, res) => {
+  const { page = 1, limit = 10, search = "", categoryId = "" } = req.query;
+>>>>>>> 615604e9a16e590e1477d1190a5a1a7ba4013a49
 
   // 🔹 Validate pagination params
   const parsedPage = parseInt(page, 10);
@@ -85,7 +95,11 @@ export const getAllSubCategories = tryCatch(async (req, res) => {
     page: parsedPage,
     limit: parsedLimit,
     search: search.trim(),
+<<<<<<< HEAD
     subCategoryId: subCategoryId,
+=======
+    categoryId: categoryId,
+>>>>>>> 615604e9a16e590e1477d1190a5a1a7ba4013a49
   });
 
   return sendResponse({
@@ -96,6 +110,7 @@ export const getAllSubCategories = tryCatch(async (req, res) => {
     meta: result.meta,
   });
 });
+<<<<<<< HEAD
 
 
 
@@ -137,3 +152,5 @@ export const getMySubCategories = tryCatch(async (req, res) => {
     meta: result.meta,
   });
 });
+=======
+>>>>>>> 615604e9a16e590e1477d1190a5a1a7ba4013a49

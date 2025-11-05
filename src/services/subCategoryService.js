@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { addMultiAdminMappings, getAdminsForEntity } from "../repositories/entityAdminRepo.js";
 import {
   createSubCategoryRepo,
@@ -8,6 +9,14 @@ import {
   getMySubCategories,
   getSubCategoryByIdRepo,
   updateSubCategoryById,
+=======
+import { addMultiAdminMappings } from "../repositories/entityAdminRepo.js";
+import {
+  createSubCategoryRepo,
+  findSubCategoryByNameAndCategoryRepo,
+  getAllSubCategoriesRepo,
+  getSubCategoryByIdRepo,
+>>>>>>> 615604e9a16e590e1477d1190a5a1a7ba4013a49
 } from "../repositories/subCategoryRepo.js";
 import { assignRoleToUsers } from "../repositories/userRepo.js";
 import { createError } from "../util/responseHandler.js";
@@ -59,6 +68,7 @@ export const createSubCategoryService = async (data) => {
   };
 };
 
+<<<<<<< HEAD
 export const updateSubCategoryService = async (id, updates, adminSocialIds) => {
     const subCategory = await findSubCategoryById(id);
     if (!subCategory) throw new Error("Sub-category not found.");
@@ -110,6 +120,8 @@ export const updateSubCategoryService = async (id, updates, adminSocialIds) => {
 };
 
 
+=======
+>>>>>>> 615604e9a16e590e1477d1190a5a1a7ba4013a49
 export const getSubCategoryByIdService = async (id) => {
   return await getSubCategoryByIdRepo(id);
 };
@@ -143,6 +155,7 @@ export const listSubCategoriesService = async ({
     },
   };
 };
+<<<<<<< HEAD
 
 
 export const getMySubCategoriesService = async (userSocialId, { page = 1, limit = 10, search = "" }) => {
@@ -165,3 +178,5 @@ export const getMySubCategoriesService = async (userSocialId, { page = 1, limit 
     };
 };
 
+=======
+>>>>>>> 615604e9a16e590e1477d1190a5a1a7ba4013a49

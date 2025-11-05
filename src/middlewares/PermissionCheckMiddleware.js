@@ -55,6 +55,10 @@ export const authorize = (action, entityId = null) => {
         });
       }
 
+<<<<<<< HEAD
+=======
+      // ✅ User authorized
+>>>>>>> 615604e9a16e590e1477d1190a5a1a7ba4013a49
       next();
     } catch (err) {
       console.error("Authorization error:", err);
