@@ -39,7 +39,6 @@ const itemSchema = new mongoose.Schema(
         },
 
 
-
         isActive: {
             type: Boolean,
             required: true,

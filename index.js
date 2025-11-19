@@ -5,6 +5,7 @@ import { connectDB } from "./src/config/db.js";
 import authRoutes from "./src/routes/authRoutes.js";
 import categoryRoutes from "./src/routes/categoryRoutes.js";
 import subCategoryRoutes from "./src/routes/subCategoryRoutes.js";
+import itemRoutes from "./src/routes/itemRoutes.js";
 import { errorHandler } from "./src/util/responseHandler.js";
 const PORT = process.env.PORT || 5000;
 const app = express();
@@ -17,6 +18,7 @@ app.use(express.json());
 app.use("/api/auth", authRoutes);
 app.use("/api/category", categoryRoutes);
 app.use("/api/sub-category", subCategoryRoutes);
+app.use("/api/item", itemRoutes);
 
 app.use(errorHandler);
 app.listen(PORT, () => {
