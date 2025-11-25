@@ -14,7 +14,7 @@ import {
 export const createCategory = tryCatch(async (req, res) => {
   const { name, description, adminSocialIds } = req.body;
 
-  const { category, message } = await createCategoryService(
+  const { category, adminSocialIds: admins, message } = await createCategoryService(
     { name, description },
     adminSocialIds
   );
@@ -23,16 +23,19 @@ export const createCategory = tryCatch(async (req, res) => {
     res,
     statusCode: 201,
     message: message || "Category created successfully",
-    data: category,
+    data: {
+      category,
+      adminSocialIds: admins,
+    },
   });
 });
+
 
 export const updateCategory = tryCatch(async (req, res) => {
   const { id } = req.params;
   const { name, description, adminSocialIds, isActive } = req.body;
- 
 
-  const { updatedCategory: category, message } = await updateCategoryService(
+  const { updatedCategory: category, adminSocialIds: admins, message } = await updateCategoryService(
     id,
     { name, description, isActive },
     adminSocialIds
@@ -42,10 +45,12 @@ export const updateCategory = tryCatch(async (req, res) => {
     res,
     statusCode: 200,
     message: message || "Category updated successfully",
-    data: category,
+    data: {
+      category,
+      adminSocialIds: admins,
+    },
   });
 });
-
 
 
 export const getAllCategories = tryCatch(async (req, res) => {
@@ -99,7 +104,6 @@ export const getMyCategories = tryCatch(async (req, res) => {
   const userSocialId = req.user.socialId;
   const { page = 1, limit = 10, search = "" } = req.query;
 
-  // 🔹 Validate pagination params
   const parsedPage = parseInt(page, 10);
   const parsedLimit = parseInt(limit, 10);
 
