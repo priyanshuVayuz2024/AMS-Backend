@@ -10,13 +10,14 @@ import {
 
 export const getAllUsers = tryCatch(async (req, res) => {
   const { page, limit, search = "" } = req.query;
-
+  
+  
   const options = { search: search.trim() };
   
   if (page !== undefined && limit !== undefined) {
     const parsedPage = parseInt(page, 10);
     const parsedLimit = parseInt(limit, 10);
-
+    
     if (
       isNaN(parsedPage) ||
       isNaN(parsedLimit) ||

@@ -74,8 +74,8 @@ export const getUserRoleFromUserRolesRepo = async (id) => {
 };
 
 export const getAllUsers = async (filter = {}, options = {}) => {
+  
     let query = User.find(filter).sort({ createdAt: -1 });
-    
     if (options.page !== undefined && options.limit !== undefined) {
         const skip = (options.page - 1) * options.limit;
         query = query.skip(skip).limit(options.limit);
