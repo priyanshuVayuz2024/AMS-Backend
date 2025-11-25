@@ -72,3 +72,15 @@ export const removeRoleFromUsers = async (
 export const getUserRoleFromUserRolesRepo = async (id) => {
   return await UserRole.find({ user: id }).populate("role").populate("user");
 };
+
+
+export const getAllUsers = async (filter = {}) => {
+ 
+
+    const [data, total] = await Promise.all([
+        User.find(filter).sort({ createdAt: -1 }),
+        User.countDocuments(filter),
+    ]);
+
+    return { data, total };
+};
