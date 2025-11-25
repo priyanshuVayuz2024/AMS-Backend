@@ -161,10 +161,22 @@ export const listCategoriesService = async ({
   };
 };
 
+
 export const getCategoryByIdService = async (categoryId) => {
   const category = await findCategoryById(categoryId);
   if (!category) throw new Error("Category not found.");
-  return category;
+
+  const categoryObj = category.toObject ? category.toObject() : category;
+
+  const adminMappings = await getAdminsForEntity(categoryId, ENTITY_TYPE);
+  const adminSocialIds = (adminMappings || []).map(
+    (mapping) => mapping.userSocialId
+  );
+
+  return {
+    ...categoryObj,
+    adminSocialIds,
+  };
 };
 
 export const getMyCategoriesService = async (

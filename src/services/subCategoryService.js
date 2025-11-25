@@ -135,7 +135,24 @@ export const updateSubCategoryService = async (id, updates, adminSocialIds) => {
 };
 
 export const getSubCategoryByIdService = async (id) => {
-  return await getSubCategoryByIdRepo(id);
+  if (!id) {
+    throw new Error("SubCategory ID is required");
+  }
+  const subCategory = await getSubCategoryByIdRepo(id);
+  if (!subCategory) {
+    throw new Error("SubCategory not found");
+  }
+  const subCategoryObj = subCategory.toObject
+    ? subCategory.toObject()
+    : subCategory;
+  const adminMappings = await getAdminsForEntity(subCategory._id, ENTITY_TYPE);
+  const adminSocialIds = (adminMappings || []).map(
+    (mapping) => mapping.userSocialId
+  );
+  return {
+    ...subCategoryObj,
+    adminSocialIds,
+  };
 };
 
 export const listSubCategoriesService = async ({
