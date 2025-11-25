@@ -14,7 +14,7 @@ import {
 export const createSubCategory = tryCatch(async (req, res) => {
   const { categoryId, name, description, adminSocialIds } = req.body;
 
-  const { subCategory, message } = await createSubCategoryService({
+  const { subCategory, adminSocialIds: admins, message } = await createSubCategoryService({
     categoryId,
     name,
     description,
@@ -26,7 +26,10 @@ export const createSubCategory = tryCatch(async (req, res) => {
     res,
     statusCode: 201,
     message: message,
-    data: subCategory,
+    data: {
+      subCategory,
+      adminSocialIds: admins,
+    },
   });
 });
 
@@ -46,7 +49,7 @@ export const updateSubCategory = tryCatch(async (req, res) => {
   const { id } = req.params;
   const { name, description, adminSocialIds, isActive } = req.body;
 
-  const { updatedSubCategory: subCategory, message } = await updateSubCategoryService(
+  const { updatedSubCategory: subCategory, adminSocialIds: admins, message } = await updateSubCategoryService(
     id,
     { name, description, isActive },
     adminSocialIds
@@ -56,7 +59,10 @@ export const updateSubCategory = tryCatch(async (req, res) => {
     res,
     statusCode: 200,
     message: message || "Sub-Category updated successfully",
-    data: subCategory,
+    data: {
+      subCategory,
+      adminSocialIds: admins,
+    },
   });
 });
 

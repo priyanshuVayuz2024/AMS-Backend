@@ -1,6 +1,8 @@
 import {
+  addAdminMapping,
   addMultiAdminMappings,
   getAdminsForEntity,
+  removeAdminMappings,
 } from "../repositories/entityAdminRepo.js";
 import {
   createSubCategoryRepo,
@@ -12,7 +14,10 @@ import {
   getSubCategoryByIdRepo,
   updateSubCategoryById,
 } from "../repositories/subCategoryRepo.js";
-import { assignRoleToUsers } from "../repositories/userRepo.js";
+import {
+  assignRoleToUsers,
+  removeRoleFromUsers,
+} from "../repositories/userRepo.js";
 import { createError } from "../util/responseHandler.js";
 
 const ENTITY_TYPE = "SubCategory";
@@ -58,6 +63,7 @@ export const createSubCategoryService = async (data) => {
 
   return {
     subCategory,
+    adminSocialIds,
     message: "Sub-category created successfully",
   };
 };
@@ -83,6 +89,7 @@ export const updateSubCategoryService = async (id, updates, adminSocialIds) => {
   }
 
   const updatedSubCategory = await updateSubCategoryById(id, updatePayload);
+  let finalAdminSocialIds = adminSocialIds;
 
   // Update admin mapping if provided
   if (Array.isArray(adminSocialIds)) {
@@ -121,9 +128,10 @@ export const updateSubCategoryService = async (id, updates, adminSocialIds) => {
         subCategory._id
       );
     }
+    finalAdminSocialIds = adminSocialIds;
   }
 
-  return { updatedSubCategory, message };
+  return { updatedSubCategory, adminSocialIds: finalAdminSocialIds, message };
 };
 
 export const getSubCategoryByIdService = async (id) => {
@@ -149,8 +157,25 @@ export const listSubCategoriesService = async ({
     page,
     limit,
   });
+
+  const enrichedData = await Promise.all(
+    data.map(async (subCategory) => {
+      const subCategoryObj = subCategory.toObject ? subCategory.toObject() : subCategory;
+
+      const adminMappings = await getAdminsForEntity(subCategory._id, ENTITY_TYPE);
+      const adminSocialIds = (adminMappings || []).map(
+        (mapping) => mapping.userSocialId
+      );
+
+      return {
+        ...subCategoryObj,
+        adminSocialIds,
+      };
+    })
+  );
+
   return {
-    data,
+    data: enrichedData,
     meta: {
       total,
       page,
