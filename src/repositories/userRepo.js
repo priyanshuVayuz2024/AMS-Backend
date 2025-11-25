@@ -82,7 +82,7 @@ export const getAllUsers = async (filter = {}, options = {}) => {
     }
 
     const [data, total] = await Promise.all([
-        query,
+        query.exec(), 
         User.countDocuments(filter),
     ]);
 

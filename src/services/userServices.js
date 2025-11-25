@@ -20,23 +20,31 @@ export const getPermissionsByRoleIdService = async (id) => {
 };
 
 
-export const getAllUsersService = async ({ page = 1, limit = 10, search = "" }) => {
+export const getAllUsersService = async ({ page, limit, search = "" }) => {
     const filter = {};
 
-    // case-insensitive partial match
     if (search) {
         filter.name = { $regex: search, $options: "i" }; 
     }
 
-    const { data, total } = await getAllUsers(filter, { page, limit });
+    const options = {};
+    if (page !== undefined && limit !== undefined) {
+        options.page = page;
+        options.limit = limit;
+    }
+
+    const { data, total } = await getAllUsers(filter, options);
+
+    const meta = { total };
+    if (page !== undefined && limit !== undefined) {
+        meta.page = page;
+        meta.limit = limit;
+        meta.totalPages = Math.ceil(total / limit);
+    }
 
     return {
         data,
-        meta: {
-            total,
-            page,
-            limit,
-            totalPages: Math.ceil(total / limit),
-        },
+        meta,
     };
 };
+
