@@ -21,8 +21,8 @@ app.use("/api/auth", authRoutes);
 app.use("/api/category", categoryRoutes);
 app.use("/api/sub-category", subCategoryRoutes);
 app.use("/api/item", itemRoutes);
-app.use("/app/policy", policyRoutes)
-app.use("/app/user", userRoutes)
+app.use("/api/policy", policyRoutes)
+app.use("/api/user", userRoutes)
 
 app.use(errorHandler);
 app.listen(PORT, () => {

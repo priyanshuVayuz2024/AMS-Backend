@@ -73,12 +73,16 @@ export const getUserRoleFromUserRolesRepo = async (id) => {
   return await UserRole.find({ user: id }).populate("role").populate("user");
 };
 
-
-export const getAllUsers = async (filter = {}) => {
- 
+export const getAllUsers = async (filter = {}, options = {}) => {
+    let query = User.find(filter).sort({ createdAt: -1 });
+    
+    if (options.page !== undefined && options.limit !== undefined) {
+        const skip = (options.page - 1) * options.limit;
+        query = query.skip(skip).limit(options.limit);
+    }
 
     const [data, total] = await Promise.all([
-        User.find(filter).sort({ createdAt: -1 }),
+        query,
         User.countDocuments(filter),
     ]);
 
