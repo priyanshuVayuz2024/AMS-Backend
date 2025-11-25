@@ -11,7 +11,6 @@ const router = express.Router();
 router.post(
   "/",
   authenticate,
-  authorize("policy:create"),
   validateRequestData(policyValidationSchema),
   createPolicy
 );
@@ -19,28 +18,24 @@ router.post(
 router.get(
   "/",
   authenticate,
-  authorize("policy:view"),
   getAllPolicies
 );
 
 router.get(
   "/my",
   authenticate,
-  authorize("policy:view"),
   getMyPolicies
 );
 
 router.get(
   "/:id",
   authenticate,
-  authorize("policy:view"),
   getPolicyById
 );
 
 router.put(
   "/:id",
   authenticate,
-  authorize("policy:update"),
   validateRequestData(policyValidationSchema),
   updatePolicy
 );

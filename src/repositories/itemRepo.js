@@ -1,33 +1,33 @@
-import ItemModel from "../models/ItemModel.js";
+import Item from "../models/ItemModel.js";
 import EntityAdminMapping from "../models/EntityAdminMappingModel.js";
 
 export const createItem = async (itemData) => {
-    return await ItemModel.create(itemData);
+    return await Item.create(itemData);
 };
 
 export const findItemById = async (id) => {
-    return await ItemModel.findById(id);
+    return await Item.findById(id);
 };
 
 export const updateItemById = async (id, updateData) => {
-    return await ItemModel.findByIdAndUpdate(id, updateData, { new: true });
+    return await Item.findByIdAndUpdate(id, updateData, { new: true });
 };
 
 
 export const findItemByName = async (name) => {
-    return await ItemModel.findOne({ name: new RegExp(`^${name}$`, "i") });
+    return await Item.findOne({ name: new RegExp(`^${name}$`, "i") });
 };
 
 export const deleteItemById = async (id) => {
-    return await ItemModel.findByIdAndDelete(id);
+    return await Item.findByIdAndDelete(id);
 };
 
 export const getAllItems = async (filter = {}, { page = 1, limit = 10 } = {}) => {
     const skip = (page - 1) * limit;
 
     const [data, total] = await Promise.all([
-        ItemModel.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
-        ItemModel.countDocuments(filter),
+        Item.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
+        Item.countDocuments(filter),
     ]);
 
     return { data, total };
@@ -53,8 +53,8 @@ export const getMyItems = async (userSocialId, filter = {}, { page = 1, limit = 
     const query = { _id: { $in: itemIds }, ...filter };
 
     const [data, total] = await Promise.all([
-        ItemModel.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit),
-        ItemModel.countDocuments(query),
+        Item.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit),
+        Item.countDocuments(query),
     ]);
 
     return { data, total };

@@ -87,7 +87,7 @@ export const login = async (req, res) => {
             user.socialId
           );
 
-        if (entityMapping) {
+        if (entityMapping & entityMapping?.entityType ) {
           const Model = mongoose.model(entityMapping.entityType);
           const entityData = await Model.findById(entityMapping.entityId);
 
