@@ -105,6 +105,7 @@ export const getAllItems = tryCatch(async (req, res) => {
     message: "Items fetched successfully",
     data: result.data,
     meta: result.meta,
+       
   });
 });
 

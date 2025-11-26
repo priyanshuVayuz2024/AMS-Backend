@@ -10,7 +10,7 @@ const entityAdminMappingSchema = new mongoose.Schema(
         entityType: {
             type: String,
             required: true,
-            enum: ["Category", "SubCategory", "Group"], // add more as needed
+            enum: ["Category", "SubCategory", "Group", "Item"], // add more as needed
         },
         userSocialId: {
             type: String,
