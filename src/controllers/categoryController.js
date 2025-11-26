@@ -1,5 +1,6 @@
 import {
   createCategoryService,
+  deleteCategoryService,
   getCategoryByIdService,
   getMyCategoriesService,
   listCategoriesService,
@@ -61,31 +62,32 @@ export const updateCategory = tryCatch(async (req, res) => {
 });
 
 export const getAllCategories = tryCatch(async (req, res) => {
-  const { page = 1, limit = 10, search = "" } = req.query;
+  const { page, limit, search = "" } = req.query;
+  const options = { search: search.trim() };
 
-  // 🔹 Validate pagination params
-  const parsedPage = parseInt(page, 10);
-  const parsedLimit = parseInt(limit, 10);
+  if (page !== undefined && limit !== undefined) {
+    const parsedPage = parseInt(page, 10);
+    const parsedLimit = parseInt(limit, 10);
 
-  if (
-    isNaN(parsedPage) ||
-    isNaN(parsedLimit) ||
-    parsedPage <= 0 ||
-    parsedLimit <= 0
-  ) {
-    return sendErrorResponse({
-      res,
-      statusCode: 400,
-      message:
-        "Invalid pagination parameters. 'page' and 'limit' must be positive numbers.",
-    });
+    if (
+      isNaN(parsedPage) ||
+      isNaN(parsedLimit) ||
+      parsedPage <= 0 ||
+      parsedLimit <= 0
+    ) {
+      return sendErrorResponse({
+        res,
+        statusCode: 400,
+        message:
+          "Invalid pagination parameters. 'page' and 'limit' must be positive numbers.",
+      });
+    }
+
+    options.page = parsedPage;
+    options.limit = parsedLimit;
   }
 
-  const result = await listCategoriesService({
-    page: parsedPage,
-    limit: parsedLimit,
-    search: search.trim(),
-  });
+  const result = await listCategoriesService(options);
 
   return sendResponse({
     res,
@@ -141,5 +143,26 @@ export const getMyCategories = tryCatch(async (req, res) => {
     message: "Fetched your categories",
     data: result.data,
     meta: result.meta,
+  });
+});
+
+export const deleteCategory = tryCatch(async (req, res) => {
+  const { id } = req.params;
+
+  const result = await deleteCategoryService(id);
+
+  if (!result.success) {
+    return sendErrorResponse({
+      res,
+      statusCode: 404,
+      message: result.message,
+    });
+  }
+
+  return sendResponse({
+    res,
+    statusCode: 200,
+    message: "Category deleted successfully",
+    data: result.data,
   });
 });

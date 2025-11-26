@@ -8,6 +8,7 @@ import {
 
 import {
   createCategory,
+  deleteCategoryById,
   findCategoryById,
   findCategoryByName,
   getAllCategories,
@@ -119,20 +120,25 @@ export const updateCategoryService = async (id, updates, adminSocialIds) => {
 };
 
 export const listCategoriesService = async ({
-  page = 1,
-  limit = 10,
+  page,
+  limit ,
   search = "",
 }) => {
   const filter = {};
 
-  // case-insensitive partial match
-  if (search) {
-    filter.name = { $regex: search, $options: "i" };
-  }
+  
+    if (search) {
+        filter.name = { $regex: search, $options: "i" }; 
+    }
 
-  const { data, total } = await getAllCategories(filter, { page, limit });
+    const options = {};
+    if (page !== undefined && limit !== undefined) {
+        options.page = page;
+        options.limit = limit;
+    }
 
-  // 🔹 Fetch adminSocialIds from entityadminmappings collection for each category
+  const { data, total } = await getAllCategories(filter, options);
+
   const enrichedData = await Promise.all(
     data.map(async (category) => {
       const categoryObj = category.toObject ? category.toObject() : category;
@@ -204,4 +210,23 @@ export const getMyCategoriesService = async (
       totalPages: Math.ceil(total / limit),
     },
   };
+};
+
+
+
+
+export const deleteCategoryService = async (id) => {
+    const deleted = await deleteCategoryById(id);
+
+    if (!deleted) {
+        return {
+            success: false,
+            message: "Category not found",
+        };
+    }
+
+    return {
+        success: true,
+        data: deleted,
+    };
 };
