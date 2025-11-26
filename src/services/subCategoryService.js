@@ -157,15 +157,15 @@ export const getSubCategoryByIdService = async (id) => {
 };
 
 export const listSubCategoriesService = async ({
-  page = 1,
-  limit = 10,
+  page ,
+  limit,
   search = "",
   categoryId,
 }) => {
   const filter = {};
 
   if (search) {
-    filter.name = { $regex: search, $options: "i" }; // case-insensitive partial match
+    filter.name = { $regex: search, $options: "i" }; 
   }
   if (categoryId) {
     filter.categoryId = categoryId;

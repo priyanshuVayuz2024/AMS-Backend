@@ -96,10 +96,27 @@ export const getSubCategoryByIdRepo = async (id) => {
   return result[0];
 };
 
-export const getAllSubCategoriesRepo = async (filter = {}, { page, limit }) => {
-  const skip = (page - 1) * limit;
+export const getAllSubCategoriesRepo = async (filter = {}, { page, limit } = {}) => {
+  
+  if (!page || !limit) {
+    const data = await SubCategory.find(filter).sort({ createdAt: -1 });
+    const total = await SubCategory.countDocuments(filter);
 
-  const data = await SubCategory.find(filter).skip(skip).limit(limit);
+    return {
+      data,
+      total,
+    };
+  }
+
+  const parsedPage = Number(page);
+  const parsedLimit = Number(limit);
+
+  const skip = (parsedPage - 1) * parsedLimit;
+
+  const data = await SubCategory.find(filter)
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(parsedLimit);
 
   const total = await SubCategory.countDocuments(filter);
 
@@ -110,10 +127,7 @@ export const getAllSubCategoriesRepo = async (filter = {}, { page, limit }) => {
 };
 
 
-
 export const getMySubCategories = async (userSocialId, filter = {}, { page = 1, limit = 10 } = {}) => {
-  console.log("testing if here")
-    // Find all mappings where user is admin for categories
     const mappings = await EntityAdminMapping.find({
         userSocialId,
         entityType: "SubCategory",
@@ -126,7 +140,6 @@ export const getMySubCategories = async (userSocialId, filter = {}, { page = 1, 
         return { data: [], total: 0 };
     }
 
-    // 🔹 Add sub-category ID filter + pagination
     const skip = (page - 1) * limit;
 
     const query = { _id: { $in: subCategoryIds }, ...filter };

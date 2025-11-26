@@ -68,32 +68,33 @@ export const updateSubCategory = tryCatch(async (req, res) => {
 });
 
 export const getAllSubCategories = tryCatch(async (req, res) => {
-  const { page = 1, limit = 10, search = "", subCategoryId = "" } = req.query;
+  const { page , limit , search = "", categoryId = "" } = req.query;
+ const options = { search: search.trim() };
+  
+  if (page !== undefined && limit !== undefined) {
+    const parsedPage = parseInt(page, 10);
+    const parsedLimit = parseInt(limit, 10);
+    
+    if (
+      isNaN(parsedPage) ||
+      isNaN(parsedLimit) ||
+      parsedPage <= 0 ||
+      parsedLimit <= 0
+    ) {
+      return sendErrorResponse({
+        res,
+        statusCode: 400,
+        message:
+          "Invalid pagination parameters. 'page' and 'limit' must be positive numbers.",
+      });
+    }
 
-  // 🔹 Validate pagination params
-  const parsedPage = parseInt(page, 10);
-  const parsedLimit = parseInt(limit, 10);
-
-  if (
-    isNaN(parsedPage) ||
-    isNaN(parsedLimit) ||
-    parsedPage <= 0 ||
-    parsedLimit <= 0
-  ) {
-    return sendErrorResponse({
-      res,
-      statusCode: 400,
-      message:
-        "Invalid pagination parameters. 'page' and 'limit' must be positive numbers.",
-    });
+    options.page = parsedPage;
+    options.limit = parsedLimit;
   }
 
-  const result = await listSubCategoriesService({
-    page: parsedPage,
-    limit: parsedLimit,
-    search: search.trim(),
-    subCategoryId: subCategoryId,
-  });
+
+  const result = await listSubCategoriesService(options);
 
   return sendResponse({
     res,
