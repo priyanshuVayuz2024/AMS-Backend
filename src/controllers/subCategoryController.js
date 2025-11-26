@@ -1,5 +1,6 @@
 import {
   createSubCategoryService,
+  deleteSubCategoryService,
   getMySubCategoriesService,
   getSubCategoryByIdService,
   listSubCategoriesService,
@@ -21,7 +22,7 @@ export const createSubCategory = tryCatch(async (req, res) => {
     adminSocialIds,
   });
 
-  // 3️⃣ Return success response
+ 
   return sendResponse({
     res,
     statusCode: 201,
@@ -142,4 +143,26 @@ export const getMySubCategories = tryCatch(async (req, res) => {
     data: result.data,
     meta: result.meta,
   });
+});
+
+
+export const deleteSubCategory = tryCatch(async (req, res) => {
+    const { id } = req.params;
+
+    const result = await deleteSubCategoryService(id);
+
+    if (!result.success) {
+        return sendErrorResponse({
+            res,
+            statusCode: 404,
+            message: result.message,
+        });
+    }
+
+    return sendResponse({
+        res,
+        statusCode: 200,
+        message: "SubCategory deleted successfully",
+        data: result.data,
+    });
 });

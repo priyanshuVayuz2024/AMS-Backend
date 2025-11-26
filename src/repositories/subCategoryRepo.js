@@ -1,6 +1,8 @@
 import mongoose from "mongoose";
 import SubCategory from "../models/SubCategoryModel.js";
 import EntityAdminMapping from "../models/EntityAdminMappingModel.js";
+import GroupModel from "../models/GroupModel.js";
+import ItemModel from "../models/ItemModel.js";
 
 export const findSubCategoryByNameAndCategoryRepo = async (
   categoryId,
@@ -135,4 +137,13 @@ export const getMySubCategories = async (userSocialId, filter = {}, { page = 1, 
     ]);
 
     return { data, total };
+};
+
+
+export const deleteSubCategoryById = async (id) => {
+    await GroupModel.deleteMany({ subCategoryId: id });
+
+    await ItemModel.deleteMany({ subCategoryId: id });
+
+    return await SubCategory.findByIdAndDelete(id);
 };

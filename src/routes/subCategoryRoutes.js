@@ -5,6 +5,7 @@ import { validateRequestData } from "../middlewares/validateRequestData.js";
 import { createSubCategorySchema } from "../validationSchema/subCategoryValidationSchema.js";
 import {
   createSubCategory,
+  deleteSubCategory,
   getAllSubCategories,
   getMySubCategories,
   getSubCategoryById,
@@ -50,5 +51,7 @@ router.get(
 
 
 router.put("/:id", authenticate, authorize("subCategory:update"), updateSubCategory);
+
+router.delete("/:id", authenticate, authorize("subCategory:delete") , deleteSubCategory);
 
 export default router;

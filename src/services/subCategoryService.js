@@ -6,6 +6,7 @@ import {
 } from "../repositories/entityAdminRepo.js";
 import {
   createSubCategoryRepo,
+  deleteSubCategoryById,
   findSubCategoryById,
   findSubCategoryByName,
   findSubCategoryByNameAndCategoryRepo,
@@ -226,4 +227,21 @@ export const getMySubCategoriesService = async (
       totalPages: Math.ceil(total / limit),
     },
   };
+};
+
+
+export const deleteSubCategoryService = async (id) => {
+    const deleted = await deleteSubCategoryById(id);
+
+    if (!deleted) {
+        return {
+            success: false,
+            message: "SubCategory not found",
+        };
+    }
+
+    return {
+        success: true,
+        data: deleted,
+    };
 };
