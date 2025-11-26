@@ -7,6 +7,7 @@ import {
 
 import {
     createItem,
+    deleteItemById,
     findItemById,
     findItemByName,
     getAllItems,
@@ -164,3 +165,37 @@ export const getMyItemsService = async (userSocialId, { page = 1, limit = 10, se
         },
     };
 };
+
+
+
+export const deleteItemService = async (id, user) => {
+    const item = await findItemById(id);
+
+    if (!item) {
+        return {
+            success: false,
+            status: 404,
+            message: "Item not found",
+        };
+    }
+
+    // Ownership check
+    const isOwner = item.ownerSocialId?.toString() === user.socialId?.toString();
+    const isAdmin = user.role === "admin"; // optional
+
+    if (!isOwner && !isAdmin) {
+        return {
+            success: false,
+            status: 403,
+            message: "You are not allowed to delete this item",
+        };
+    }
+
+    const deletedItem = await deleteItemById(id);
+
+    return {
+        success: true,
+        data: deletedItem,
+    };
+};
+

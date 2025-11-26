@@ -14,28 +14,34 @@ import {
 export const createCategory = tryCatch(async (req, res) => {
   const { name, description, adminSocialIds } = req.body;
 
-  const { category, adminSocialIds: admins, message } = await createCategoryService(
-    { name, description },
-    adminSocialIds
-  );
+  const {
+    category,
+    adminSocialIds: admins,
+    message,
+  } = await createCategoryService({ name, description }, adminSocialIds);
 
   return sendResponse({
     res,
     statusCode: 201,
     message: message || "Category created successfully",
     data: {
-      category,
-      adminSocialIds: admins,
+      category: {
+        ...(category.toObject?.() || category),
+        adminSocialIds: admins,
+      },
     },
   });
 });
-
 
 export const updateCategory = tryCatch(async (req, res) => {
   const { id } = req.params;
   const { name, description, adminSocialIds, isActive } = req.body;
 
-  const { updatedCategory: category, adminSocialIds: admins, message } = await updateCategoryService(
+  const {
+    updatedCategory: category,
+    adminSocialIds: admins,
+    message,
+  } = await updateCategoryService(
     id,
     { name, description, isActive },
     adminSocialIds
@@ -43,15 +49,16 @@ export const updateCategory = tryCatch(async (req, res) => {
 
   return sendResponse({
     res,
-    statusCode: 200,
+    statusCode: 201,
     message: message || "Category updated successfully",
     data: {
-      category,
-      adminSocialIds: admins,
+      category: {
+        ...(category.toObject?.() || category),
+        adminSocialIds: admins,
+      },
     },
   });
 });
-
 
 export const getAllCategories = tryCatch(async (req, res) => {
   const { page = 1, limit = 10, search = "" } = req.query;
@@ -69,7 +76,8 @@ export const getAllCategories = tryCatch(async (req, res) => {
     return sendErrorResponse({
       res,
       statusCode: 400,
-      message: "Invalid pagination parameters. 'page' and 'limit' must be positive numbers.",
+      message:
+        "Invalid pagination parameters. 'page' and 'limit' must be positive numbers.",
     });
   }
 
@@ -116,7 +124,8 @@ export const getMyCategories = tryCatch(async (req, res) => {
     return sendErrorResponse({
       res,
       statusCode: 400,
-      message: "Invalid pagination parameters. 'page' and 'limit' must be positive numbers.",
+      message:
+        "Invalid pagination parameters. 'page' and 'limit' must be positive numbers.",
     });
   }
 

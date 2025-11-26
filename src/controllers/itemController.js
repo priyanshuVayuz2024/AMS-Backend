@@ -1,5 +1,6 @@
 import {
   createItemService,
+  deleteItemService,
   getItemByIdService,
   getMyItemsService,
   listItemsService,
@@ -156,4 +157,25 @@ export const getMyItems = tryCatch(async (req, res) => {
     data: result.data,
     meta: result.meta,
   });
+});
+
+export const deleteItem = tryCatch(async (req, res) => {
+    const { id } = req.params;
+
+    const result = await deleteItemService(id);
+
+    if (!result.success) {
+        return sendErrorResponse({
+            res,
+            statusCode: 404,
+            message: result.message,
+        });
+    }
+
+    return sendResponse({
+        res,
+        statusCode: 200,
+        message: "Item deleted successfully",
+        data: result.data,
+    });
 });

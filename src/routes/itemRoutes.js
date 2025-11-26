@@ -5,6 +5,7 @@ import {
   getItemById,
   getMyItems,
   updateItem,
+  deleteItem
 } from "../controllers/itemController.js";
 
 import { authenticate } from "../middlewares/AuthMiddleware.js";
@@ -32,6 +33,7 @@ router.get("/:id", authenticate, authorize("item:view"), getItemById);
 
 router.put("/:id", authenticate, authorize("item:update"), updateItem);
 
+router.delete("/:id", authenticate, deleteItem)
 
 
 export default router;
