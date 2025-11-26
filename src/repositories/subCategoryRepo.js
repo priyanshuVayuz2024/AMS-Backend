@@ -154,9 +154,9 @@ export const getMySubCategories = async (userSocialId, filter = {}, { page = 1, 
 
 
 export const deleteSubCategoryById = async (id) => {
-    await GroupModel.deleteMany({ subCategoryId: id });
-
     await ItemModel.deleteMany({ parentType: "SubCategory", parentId: id });
+
+    // await GroupModel.deleteMany({ subCategoryId: id });
 
     return await SubCategory.findByIdAndDelete(id);
 };
