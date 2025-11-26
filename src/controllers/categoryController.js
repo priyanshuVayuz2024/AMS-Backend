@@ -88,13 +88,14 @@ export const getAllCategories = tryCatch(async (req, res) => {
   }
 
   const result = await listCategoriesService(options);
-
+  console.log("12", result?.meta);
+  
   return sendResponse({
     res,
     statusCode: 200,
     message: "Categories fetched successfully",
-    data: result.data,
-    meta: result.meta,
+    data: result?.data,
+    meta: result?.meta,
   });
 });
 

@@ -1,9 +1,10 @@
-const sendResponse = ({ res, statusCode, message, data = null }) => {
+const sendResponse = ({ res, statusCode, message, data = null, meta }) => {
   return res.status(statusCode).json({
     status_code: statusCode,
     success: statusCode >= 200 && statusCode < 300,
     message,
     data,
+    meta,
   });
 };
 
