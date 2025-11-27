@@ -27,4 +27,10 @@ const categoryValidationSchema = Joi.object({
   }),
 });
 
-export default categoryValidationSchema;
+
+const categoryStatusValidationSchema = Joi.object({
+  isActive: Joi.boolean().default(true).messages({
+    "boolean.base": "isActive must be true or false",
+  }),
+});
+export  {categoryValidationSchema, categoryStatusValidationSchema};

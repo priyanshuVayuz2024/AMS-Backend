@@ -10,7 +10,7 @@ import {
 import { authenticate } from "../middlewares/AuthMiddleware.js";
 import { authorize } from "../middlewares/PermissionCheckMiddleware.js";
 import { validateRequestData } from "../middlewares/validateRequestData.js";
-import categoryValidationSchema from "../validationSchema/categoryValidationSchema.js";
+import {categoryValidationSchema, categoryStatusValidationSchema } from "../validationSchema/categoryValidationSchema.js";
 
 const router = express.Router();
 
@@ -28,7 +28,21 @@ router.get("/", authenticate, authorize("category:view"), getAllCategories);
 router.get("/my", authenticate, authorize("category:view"), getMyCategories);
 router.get("/:id", authenticate, authorize("category:view"), getCategoryById);
 
-router.put("/:id", authenticate, authorize("category:update"), updateCategory);
+router.put(
+  "/:id",
+  authenticate,
+  authorize("category:update"),
+  validateRequestData(categoryValidationSchema),
+  updateCategory
+);
+
+router.put(
+  "/status/:id",
+  authenticate,
+  authorize("category:update"),
+  validateRequestData(categoryStatusValidationSchema),
+  updateCategory
+);
 
 router.delete(
   "/:id",

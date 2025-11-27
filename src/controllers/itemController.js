@@ -57,12 +57,13 @@ export const createItem = tryCatch(async (req, res) => {
 
 export const updateItem = tryCatch(async (req, res) => {
   const { id } = req.params;
-  const { name, description, adminSocialIds, isActive } = req.body;
+  const { name, description, assignedToSocialId, isActive } = req.body;
+  console.log("upload adminSocialIds", assignedToSocialId);
 
   const { updatedItem: item, message } = await updateItemService(
     id,
     { name, description, isActive },
-    adminSocialIds
+    assignedToSocialId
   );
 
   return sendResponse({

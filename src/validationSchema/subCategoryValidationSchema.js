@@ -43,3 +43,12 @@ export const createSubCategorySchema = Joi.object({
       "string.empty": "adminSocialId cannot be empty",
     }),
 });
+
+
+export const createStatusSubCategorySchema = Joi.object({
+  
+  isActive: Joi.boolean().default(true).messages({
+    "boolean.base": "isActive must be a boolean value",
+  }),
+ 
+});

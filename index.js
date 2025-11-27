@@ -8,6 +8,8 @@ import subCategoryRoutes from "./src/routes/subCategoryRoutes.js";
 import itemRoutes from "./src/routes/itemRoutes.js";
 import policyRoutes from "./src/routes/policyRoutes.js"
 import userRoutes from "./src/routes/userRoutes.js"
+import groupRoutes from "./src/routes/groupRoutes.js"
+
 import { errorHandler } from "./src/util/responseHandler.js";
 const PORT = process.env.PORT || 5000;
 const app = express();
@@ -22,7 +24,9 @@ app.use("/api/category", categoryRoutes);
 app.use("/api/sub-category", subCategoryRoutes);
 app.use("/api/item", itemRoutes);
 app.use("/api/policy", policyRoutes)
-app.use("/api/user", userRoutes)
+app.use("/api/user", userRoutes);
+app.use("/api/group", groupRoutes);
+
 
 app.use(errorHandler);
 app.listen(PORT, () => {

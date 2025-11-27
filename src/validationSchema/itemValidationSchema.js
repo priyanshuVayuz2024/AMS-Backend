@@ -36,4 +36,10 @@ const itemValidationSchema = Joi.object({
     }),
 });
 
-export default itemValidationSchema;
+const itemStatusalidationSchema = Joi.object({
+    isActive: Joi.boolean().default(true).messages({
+        "boolean.base": "isActive must be true or false",
+    }),
+});
+
+export { itemValidationSchema, itemStatusalidationSchema } ;

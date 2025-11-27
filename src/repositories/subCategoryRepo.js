@@ -25,17 +25,16 @@ export const createSubCategoryRepo = async (data) => {
 };
 
 export const findSubCategoryById = async (id) => {
-    return await SubCategory.findById(id);
+  return await SubCategory.findById(id);
 };
 
 export const updateSubCategoryById = async (id, updateData) => {
-    return await SubCategory.findByIdAndUpdate(id, updateData, { new: true });
+  return await SubCategory.findByIdAndUpdate(id, updateData, { new: true });
 };
 
 export const findSubCategoryByName = async (name) => {
-    return await SubCategory.findOne({ name: new RegExp(`^${name}$`, "i") });
+  return await SubCategory.findOne({ name: new RegExp(`^${name}$`, "i") });
 };
-
 
 export const getSubCategoryByIdRepo = async (id) => {
   //   return await SubCategory.findById(id).populate("categoryId");
@@ -96,8 +95,10 @@ export const getSubCategoryByIdRepo = async (id) => {
   return result[0];
 };
 
-export const getAllSubCategoriesRepo = async (filter = {}, { page, limit } = {}) => {
-  
+export const getAllSubCategoriesRepo = async (
+  filter = {},
+  { page, limit } = {}
+) => {
   if (!page || !limit) {
     const data = await SubCategory.find(filter).sort({ createdAt: -1 });
     const total = await SubCategory.countDocuments(filter);
@@ -126,37 +127,50 @@ export const getAllSubCategoriesRepo = async (filter = {}, { page, limit } = {})
   };
 };
 
+export const getMySubCategories = async (
+  userSocialId,
+  filter = {},
+  { page = 1, limit = 10 } = {}
+) => {
+  const mappings = await EntityAdminMapping.find({
+    userSocialId,
+    entityType: "SubCategory",
+  });
 
-export const getMySubCategories = async (userSocialId, filter = {}, { page = 1, limit = 10 } = {}) => {
-    const mappings = await EntityAdminMapping.find({
-        userSocialId,
-        entityType: "SubCategory",
-    });
+  const subCategoryIds = mappings.map((m) => m.entityId);
 
-    
-    const subCategoryIds = mappings.map((m) => m.entityId);
+  if (subCategoryIds.length === 0) {
+    return { data: [], total: 0 };
+  }
 
-    if (subCategoryIds.length === 0) {
-        return { data: [], total: 0 };
-    }
+  const skip = (page - 1) * limit;
 
-    const skip = (page - 1) * limit;
+  const query = { _id: { $in: subCategoryIds }, ...filter };
 
-    const query = { _id: { $in: subCategoryIds }, ...filter };
+  const [data, total] = await Promise.all([
+    SubCategory.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit),
+    SubCategory.countDocuments(query),
+  ]);
 
-    const [data, total] = await Promise.all([
-        SubCategory.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit),
-        SubCategory.countDocuments(query),
-    ]);
-
-    return { data, total };
+  return { data, total };
 };
 
-
 export const deleteSubCategoryById = async (id) => {
-    await ItemModel.deleteMany({ parentType: "SubCategory", parentId: id });
+  await ItemModel.deleteMany({ parentType: "SubCategory", parentId: id });
 
-    // await GroupModel.deleteMany({ subCategoryId: id });
+  // Find all groups belonging to this subcategory
+  const groups = await GroupModel.find({ subCategoryId: id });
 
-    return await SubCategory.findByIdAndDelete(id);
+  // Extract their IDs
+  const groupIds = groups.map((g) => g._id);
+
+  // Delete items under those groups
+  await ItemModel.deleteMany({
+    parentType: "Group",
+    parentId: { $in: groupIds },
+  });
+
+  await GroupModel.deleteMany({ subCategoryId: id });
+
+  return await SubCategory.findByIdAndDelete(id);
 };

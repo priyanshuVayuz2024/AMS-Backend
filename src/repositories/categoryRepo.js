@@ -68,22 +68,33 @@ export const getMyCategories = async (
 };
 
 export const deleteCategoryById = async (id) => {
-  // 1. Delete items where parent is the Category
+  // Delete items where parent is the Category
   await ItemModel.deleteMany({ parentType: "Category", parentId: id });
 
-  // 2. Find all subcategories of the Category
+  //  Find all subcategories of the Category
   const subcategories = await SubCategory.find({ categoryId: id });
   const subcategoryIds = subcategories.map(sc => sc._id);
 
-  // 3. Delete items belonging to subcategories
-  await ItemModel.deleteMany({ 
+  //  Delete items under these subcategories
+  await ItemModel.deleteMany({
     parentType: "SubCategory",
     parentId: { $in: subcategoryIds }
   });
 
-  // 4. Delete subcategories
+  //   find all groups under those subcategories
+  const groups = await GroupModel.find({ subCategoryId: { $in: subcategoryIds } });
+  const groupIds = groups.map(g => g._id);
+
+  //  delete items under these groups
+  await ItemModel.deleteMany({
+    parentType: "Group",
+    parentId: { $in: groupIds }
+  });
+
+  await GroupModel.deleteMany({ subCategoryId: { $in: subcategoryIds } });
+
   await SubCategory.deleteMany({ categoryId: id });
 
-  // 5. Delete the category
   return await Category.findByIdAndDelete(id);
 };
+

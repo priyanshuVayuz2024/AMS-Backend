@@ -2,7 +2,7 @@ import express from "express";
 import { authorize } from "../middlewares/PermissionCheckMiddleware.js";
 import { authenticate } from "../middlewares/AuthMiddleware.js";
 import { validateRequestData } from "../middlewares/validateRequestData.js";
-import { createSubCategorySchema } from "../validationSchema/subCategoryValidationSchema.js";
+import { createStatusSubCategorySchema, createSubCategorySchema } from "../validationSchema/subCategoryValidationSchema.js";
 import {
   createSubCategory,
   deleteSubCategory,
@@ -22,17 +22,12 @@ router.post(
   createSubCategory
 );
 
-
 router.get(
   "/",
   authenticate,
   authorize("subCategory:view"),
   getAllSubCategories
 );
-
-
-
-
 
 router.get(
   "/my",
@@ -41,7 +36,6 @@ router.get(
   getMySubCategories
 );
 
-
 router.get(
   "/:id",
   authenticate,
@@ -49,9 +43,28 @@ router.get(
   getSubCategoryById
 );
 
+router.put(
+  "/:id",
+  authenticate,
+  authorize("subCategory:update"),
+  validateRequestData(createSubCategorySchema),
+  updateSubCategory
+);
 
-router.put("/:id", authenticate, authorize("subCategory:update"), updateSubCategory);
+router.put(
+  "/status/:id",
+  authenticate,
+  authorize("subCategory:update"),
+  validateRequestData(createStatusSubCategorySchema),
+  updateSubCategory
+);
 
-router.delete("/:id", authenticate, authorize("subCategory:delete") , deleteSubCategory);
+
+router.delete(
+  "/:id",
+  authenticate,
+  authorize("subCategory:delete"),
+  deleteSubCategory
+);
 
 export default router;
