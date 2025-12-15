@@ -3,7 +3,8 @@ import {
   getPolicyByIdService,
   listPolicyService,
   updatePolicyService,
-  getMyPolicyService
+  getMyPolicyService,
+  deletePolicyService,
 } from "../services/policyService.js";
 
 import {
@@ -19,16 +20,16 @@ export const createPolicy = tryCatch(async (req, res) => {
     description,
     parentType,
     parentId,
-    assignedToSocialId,
+    adminSocialIds,
     isActive,
   } = req.body;
 
-  // Ensure assignedToSocialId is a string (sometimes it may come as array)
-  if (Array.isArray(assignedToSocialId)) {
-    assignedToSocialId = assignedToSocialId[0] || null;
-  }
 
-  const { policy, message } = await createPolicyService(
+  const {
+    policy,
+    adminSocialIds: admins,
+    message,
+  } = await createPolicyService(
     {
       policyId,
       url,
@@ -37,32 +38,46 @@ export const createPolicy = tryCatch(async (req, res) => {
       parentId,
       isActive,
     },
-    assignedToSocialId
+    adminSocialIds
   );
 
   return sendResponse({
     res,
     statusCode: 201,
     message: message || "Policy created successfully",
-    data: policy,
+    data: {
+      policy: {
+        ...(policy.toObject?.() || policy),
+        adminSocialIds: admins,
+      },
+    },
   });
 });
 
 export const updatePolicy = tryCatch(async (req, res) => {
   const { id } = req.params;
-  const { policyId, url, description, assignedToSocialId, isActive } = req.body;
+  const { policyId, url, description, adminSocialIds, isActive } = req.body;
 
-  const { updatedPolicy: policy, message } = await updatePolicyService(
+  const {
+    updatedPolicy: policy,
+    adminSocialIds: admins,
+    message,
+  } = await updatePolicyService(
     id,
     { policyId, url, description, isActive },
-    assignedToSocialId
+    adminSocialIds
   );
 
   return sendResponse({
     res,
     statusCode: 200,
     message: message || "Policy updated successfully",
-    data: policy,
+    data: {
+      policy: {
+        ...(policy.toObject?.() || policy),
+        adminSocialIds: admins,
+      },
+    },
   });
 });
 
@@ -72,11 +87,17 @@ export const getAllPolicies = tryCatch(async (req, res) => {
   const parsedPage = parseInt(page, 10);
   const parsedLimit = parseInt(limit, 10);
 
-  if (isNaN(parsedPage) || isNaN(parsedLimit) || parsedPage <= 0 || parsedLimit <= 0) {
+  if (
+    isNaN(parsedPage) ||
+    isNaN(parsedLimit) ||
+    parsedPage <= 0 ||
+    parsedLimit <= 0
+  ) {
     return sendErrorResponse({
       res,
       statusCode: 400,
-      message: "Invalid pagination parameters. 'page' and 'limit' must be positive numbers.",
+      message:
+        "Invalid pagination parameters. 'page' and 'limit' must be positive numbers.",
     });
   }
 
@@ -114,11 +135,17 @@ export const getMyPolicies = tryCatch(async (req, res) => {
   const parsedPage = parseInt(page, 10);
   const parsedLimit = parseInt(limit, 10);
 
-  if (isNaN(parsedPage) || isNaN(parsedLimit) || parsedPage <= 0 || parsedLimit <= 0) {
+  if (
+    isNaN(parsedPage) ||
+    isNaN(parsedLimit) ||
+    parsedPage <= 0 ||
+    parsedLimit <= 0
+  ) {
     return sendErrorResponse({
       res,
       statusCode: 400,
-      message: "Invalid pagination parameters. 'page' and 'limit' must be positive numbers.",
+      message:
+        "Invalid pagination parameters. 'page' and 'limit' must be positive numbers.",
     });
   }
 
@@ -134,5 +161,27 @@ export const getMyPolicies = tryCatch(async (req, res) => {
     message: "Fetched your policies",
     data: result.data,
     meta: result.meta,
+  });
+});
+
+
+export const deletePolicy = tryCatch(async (req, res) => {
+  const { id } = req.params;
+
+  const result = await deletePolicyService(id);
+
+  if (!result.success) {
+    return sendErrorResponse({
+      res,
+      statusCode: 404,
+      message: result.message,
+    });
+  }
+
+  return sendResponse({
+    res,
+    statusCode: 200,
+    message: "Category deleted successfully",
+    data: result.data,
   });
 });

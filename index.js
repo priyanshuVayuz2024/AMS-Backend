@@ -9,6 +9,11 @@ import itemRoutes from "./src/routes/itemRoutes.js";
 import policyRoutes from "./src/routes/policyRoutes.js"
 import userRoutes from "./src/routes/userRoutes.js"
 import groupRoutes from "./src/routes/groupRoutes.js"
+import slaRoutes from "./src/routes/slaRoutes.js"
+import reportRoutes from "./src/routes/reportRoutes.js";
+import handOverRoutes from "./src/routes/handOverRoutes.js";
+import transferRoutes from "./src/routes/transferRoutes.js";
+import approvalRoutes from "./src/routes/approvalRoutes.js";
 
 import { errorHandler } from "./src/util/responseHandler.js";
 const PORT = process.env.PORT || 5000;
@@ -24,8 +29,13 @@ app.use("/api/category", categoryRoutes);
 app.use("/api/sub-category", subCategoryRoutes);
 app.use("/api/item", itemRoutes);
 app.use("/api/policy", policyRoutes)
+app.use("/api/sla", slaRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/group", groupRoutes);
+app.use("/api/report", reportRoutes);
+app.use("/api/handover", handOverRoutes);
+app.use("/api/transfer", transferRoutes);
+app.use("/api/approval", approvalRoutes);
 
 
 app.use(errorHandler);

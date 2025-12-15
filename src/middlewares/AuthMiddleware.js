@@ -18,10 +18,8 @@ export const authenticate = async (req, res, next) => {
 
     const token = authHeader.split(" ")[1];
 
-    // Verify JWT
     const decoded = jwt.verify(token, JWT_SECRET);
 
-    // Optional: Fetch user from DB
     const user = await findUserByIdRepo(decoded.id);
     if (!user || !user.isActive) {
       return sendErrorResponse({
@@ -31,7 +29,6 @@ export const authenticate = async (req, res, next) => {
       });
     }
 
-    // Attach user info to request object
     req.user = {
       id: user?._id,
       socialId: user?.socialId,
@@ -40,7 +37,7 @@ export const authenticate = async (req, res, next) => {
       department: user?.department,
     };
 
-    next(); // proceed to next middleware or route handler
+    next(); 
   } catch (err) {
     console.error("Authentication error:", err.message);
     return sendErrorResponse({

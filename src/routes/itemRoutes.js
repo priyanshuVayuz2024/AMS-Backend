@@ -1,11 +1,14 @@
 import express from "express";
+import multer from "multer";
 import {
   createItem,
   getAllItems,
   getItemById,
-  getMyItems,
   updateItem,
   deleteItem,
+  uploadItemsBulk,
+  getAssignedItems,
+  getUserCreatedItemsController,
 } from "../controllers/itemController.js";
 
 import { authenticate } from "../middlewares/AuthMiddleware.js";
@@ -17,7 +20,8 @@ import {
 } from "../validationSchema/itemValidationSchema.js";
 const router = express.Router();
 
-//  Create Item
+const upload = multer({ dest: "uploads/" }); 
+
 router.post(
   "/",
   authenticate,
@@ -26,11 +30,17 @@ router.post(
   createItem
 );
 
-// / Get all Items
+router.post(
+  "/bulk-upload",
+  authenticate,
+  authorize("item:create"),
+  upload.single("file"),
+  uploadItemsBulk
+);
+
 router.get("/", authenticate, authorize("item:view"), getAllItems);
-
-router.get("/my", authenticate, authorize("item:view"), getMyItems);
-
+router.get("/assign", authenticate, authorize("item:view"), getAssignedItems);
+router.get("/my", authenticate, authorize("item:view"), getUserCreatedItemsController);
 router.get("/:id", authenticate, authorize("item:view"), getItemById);
 
 router.put(

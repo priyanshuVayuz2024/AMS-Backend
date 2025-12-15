@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 const permissionSchema = new mongoose.Schema(
     {
-        action: { type: String, required: true, unique: true }, // e.g., "item:view"
+        action: { type: String, required: true, unique: true }, 
         description: { type: String },
     },
     { timestamps: true }

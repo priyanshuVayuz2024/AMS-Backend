@@ -1,10 +1,14 @@
+import QRCode from "qrcode";
+import cloudinary from "../cloudinary/useCloudinary.js";
 import {
   createItemService,
   deleteItemService,
   getItemByIdService,
-  getMyItemsService,
   listItemsService,
   updateItemService,
+  ItemBulkService,
+  getAssignedItemsService,
+  getUserCreatedItemsService,
 } from "../services/itemService.js";
 import mongoose from "mongoose";
 
@@ -22,18 +26,9 @@ export const createItem = tryCatch(async (req, res) => {
     parentId,
     assignedToSocialId,
     parentItemId,
-    isActive,
   } = req.body;
 
-  console.log(typeof assignedToSocialId, "type of social id");
-
-  // if (Array.isArray(assignedToSocialId)) {
-  //   assignedToSocialId = assignedToSocialId[0] || null; 
-  // }
-
-  // if (parentItemId === "") {
-  //   parentItemId = null; 
-  // }
+  const createdBy = req.user.socialId;
 
   const { item, message } = await createItemService(
     {
@@ -42,10 +37,23 @@ export const createItem = tryCatch(async (req, res) => {
       parentType,
       parentId,
       parentItemId,
-      isActive,
+      createdBy,
     },
     assignedToSocialId
   );
+
+  const qrUrl = `http://localhost:5000/report?itemId=${item.id}`;
+  // const qrUrl = `https://ams-backend-2-0.onrender.com/report?itemId=${item.id}`;
+
+  const qrBase64 = await QRCode.toDataURL(qrUrl);
+
+  const uploadResponse = await cloudinary.uploader.upload(qrBase64, {
+    folder: "qr",
+    public_id: `item-${item.id}`,
+    overwrite: true,
+  });
+
+  item.qrCodeUrl = uploadResponse.secure_url;
 
   return sendResponse({
     res,
@@ -58,7 +66,6 @@ export const createItem = tryCatch(async (req, res) => {
 export const updateItem = tryCatch(async (req, res) => {
   const { id } = req.params;
   const { name, description, assignedToSocialId, isActive } = req.body;
-  console.log("upload adminSocialIds", assignedToSocialId);
 
   const { updatedItem: item, message } = await updateItemService(
     id,
@@ -75,31 +82,47 @@ export const updateItem = tryCatch(async (req, res) => {
 });
 
 export const getAllItems = tryCatch(async (req, res) => {
-  const { page = 1, limit = 10, search = "" } = req.query;
+  const {
+    page,
+    limit,
+    search = "",
+    categoryId = "",
+    subCategoryId = "",
+  } = req.query;
 
-  // 🔹 Validate pagination params
-  const parsedPage = parseInt(page, 10);
-  const parsedLimit = parseInt(limit, 10);
+  const options = { search: search.trim() };
 
-  if (
-    isNaN(parsedPage) ||
-    isNaN(parsedLimit) ||
-    parsedPage <= 0 ||
-    parsedLimit <= 0
-  ) {
-    return sendErrorResponse({
-      res,
-      statusCode: 400,
-      message:
-        "Invalid pagination parameters. 'page' and 'limit' must be positive numbers.",
-    });
+  if (categoryId) {
+    options.categoryId = categoryId.trim();
   }
 
-  const result = await listItemsService({
-    page: parsedPage,
-    limit: parsedLimit,
-    search: search.trim(),
-  });
+  if (subCategoryId) {
+    options.subCategoryId = subCategoryId.trim();
+  }
+
+  if (page !== undefined && limit !== undefined) {
+    const parsedPage = parseInt(page, 10);
+    const parsedLimit = parseInt(limit, 10);
+
+    if (
+      isNaN(parsedPage) ||
+      isNaN(parsedLimit) ||
+      parsedPage <= 0 ||
+      parsedLimit <= 0
+    ) {
+      return sendErrorResponse({
+        res,
+        statusCode: 400,
+        message:
+          "Invalid pagination parameters. 'page' and 'limit' must be positive numbers.",
+      });
+    }
+
+    options.page = parsedPage;
+    options.limit = parsedLimit;
+  }
+
+  const result = await listItemsService(options);
 
   return sendResponse({
     res,
@@ -107,9 +130,9 @@ export const getAllItems = tryCatch(async (req, res) => {
     message: "Items fetched successfully",
     data: result.data,
     meta: result.meta,
-       
   });
 });
+
 
 export const getItemById = tryCatch(async (req, res) => {
   const { id } = req.params;
@@ -123,33 +146,43 @@ export const getItemById = tryCatch(async (req, res) => {
   });
 });
 
-export const getMyItems = tryCatch(async (req, res) => {
+export const getAssignedItems = tryCatch(async (req, res) => {
   const userSocialId = req.user.socialId;
-  const { page = 1, limit = 10, search = "" } = req.query;
+  const { page, limit, search = "", categoryId = "", subCategoryId = "" } = req.query;
 
-  // 🔹 Validate pagination params
-  const parsedPage = parseInt(page, 10);
-  const parsedLimit = parseInt(limit, 10);
+  const options = { search: search.trim() };
 
-  if (
-    isNaN(parsedPage) ||
-    isNaN(parsedLimit) ||
-    parsedPage <= 0 ||
-    parsedLimit <= 0
-  ) {
-    return sendErrorResponse({
-      res,
-      statusCode: 400,
-      message:
-        "Invalid pagination parameters. 'page' and 'limit' must be positive numbers.",
-    });
+  if (categoryId) {
+    options.categoryId = categoryId.trim();
   }
 
-  const result = await getMyItemsService(userSocialId, {
-    page: parsedPage,
-    limit: parsedLimit,
-    search: search.trim(),
-  });
+  if (subCategoryId) {
+    options.subCategoryId = subCategoryId.trim();
+  }
+
+  if (page !== undefined && limit !== undefined) {
+    const parsedPage = parseInt(page, 10);
+    const parsedLimit = parseInt(limit, 10);
+
+    if (
+      isNaN(parsedPage) ||
+      isNaN(parsedLimit) ||
+      parsedPage <= 0 ||
+      parsedLimit <= 0
+    ) {
+      return sendErrorResponse({
+        res,
+        statusCode: 400,
+        message:
+          "Invalid pagination parameters. 'page' and 'limit' must be positive numbers.",
+      });
+    }
+
+    options.page = parsedPage;
+    options.limit = parsedLimit;
+  }
+
+  const result = await getAssignedItemsService(userSocialId, options);
 
   return sendResponse({
     res,
@@ -160,23 +193,92 @@ export const getMyItems = tryCatch(async (req, res) => {
   });
 });
 
-export const deleteItem = tryCatch(async (req, res) => {
-    const { id } = req.params;
 
-    const result = await deleteItemService(id);
+export const getUserCreatedItemsController = tryCatch(async (req, res) => {
+  const userSocialId = req.user.socialId;
+  const { page, limit, search = "", categoryId = "", subCategoryId = "" } = req.query;
 
-    if (!result.success) {
-        return sendErrorResponse({
-            res,
-            statusCode: 404,
-            message: result.message,
-        });
+  const options = { search: search.trim() };
+
+  if (categoryId) {
+    options.categoryId = categoryId.trim();
+  }
+
+  if (subCategoryId) {
+    options.subCategoryId = subCategoryId.trim();
+  }
+
+  if (page !== undefined && limit !== undefined) {
+    const parsedPage = parseInt(page, 10);
+    const parsedLimit = parseInt(limit, 10);
+
+    if (
+      isNaN(parsedPage) ||
+      isNaN(parsedLimit) ||
+      parsedPage <= 0 ||
+      parsedLimit <= 0
+    ) {
+      return sendErrorResponse({
+        res,
+        statusCode: 400,
+        message:
+          "Invalid pagination parameters. 'page' and 'limit' must be positive numbers.",
+      });
     }
 
-    return sendResponse({
-        res,
-        statusCode: 200,
-        message: "Item deleted successfully",
-        data: result.data,
+    options.page = parsedPage;
+    options.limit = parsedLimit;
+  }
+
+  const result = await getUserCreatedItemsService(userSocialId, options);
+
+  return sendResponse({
+    res,
+    statusCode: 200,
+    message: "Fetched items created by you",
+    data: result.data,
+    meta: result.meta,
+  });
+});
+
+
+export const deleteItem = tryCatch(async (req, res) => {
+  const { id } = req.params;
+
+  const result = await deleteItemService(id);
+
+  if (!result.success) {
+    return sendErrorResponse({
+      res,
+      statusCode: 404,
+      message: result.message,
     });
+  }
+
+  return sendResponse({
+    res,
+    statusCode: 200,
+    message: "Item deleted successfully",
+    data: result.data,
+  });
+});
+
+export const uploadItemsBulk = tryCatch(async (req, res) => {
+  if (!req.file) {
+    return sendErrorResponse({
+      res,
+      statusCode: 400,
+      message: "CSV file is required.",
+    });
+  }
+
+  const filePath = req.file.path; 
+  const results = await ItemBulkService.processCSV(filePath);
+
+  return sendResponse({
+    res,
+    statusCode: 200,
+    message: "Bulk upload completed",
+    data: results,
+  });
 });

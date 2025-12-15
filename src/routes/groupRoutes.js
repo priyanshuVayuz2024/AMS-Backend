@@ -3,9 +3,10 @@ import {
   createGroup,
   getAllGroups,
   getGroupById,
-  getMyGroups,
   updateGroup,
   deleteGroup,
+  getAssignedGroups,
+  getUserCreatedGroupsController,
 } from "../controllers/groupController.js";
 
 import { authenticate } from "../middlewares/AuthMiddleware.js";
@@ -14,7 +15,6 @@ import { validateRequestData } from "../middlewares/validateRequestData.js";
 import  {groupValidationSchema, groupStatusValidationSchema } from "../validationSchema/groupValidationsSchema.js";
 const router = express.Router();
 
-//  Create Group
 router.post(
   "/",
   authenticate,
@@ -23,10 +23,10 @@ router.post(
   createGroup
 );
 
-// / Get all Groups
 router.get("/", authenticate, authorize("group:view"), getAllGroups);
 
-router.get("/my", authenticate, authorize("group:view"), getMyGroups);
+router.get("/assign", authenticate, authorize("group:view"), getAssignedGroups);
+router.get("/my", authenticate, authorize("group:view"), getUserCreatedGroupsController);
 
 router.get("/:id", authenticate, authorize("group:view"), getGroupById);
 

@@ -1,8 +1,9 @@
 import {
   createCategoryService,
   deleteCategoryService,
+  getAssignedCategoriesService,
   getCategoryByIdService,
-  getMyCategoriesService,
+  getUserCreatedCategoriesService,
   listCategoriesService,
   updateCategoryService,
 } from "../services/categoryService.js";
@@ -14,12 +15,16 @@ import {
 
 export const createCategory = tryCatch(async (req, res) => {
   const { name, description, adminSocialIds } = req.body;
+  const createdBy = req.user.socialId;
 
   const {
     category,
     adminSocialIds: admins,
     message,
-  } = await createCategoryService({ name, description }, adminSocialIds);
+  } = await createCategoryService(
+    { name, description, createdBy },
+    adminSocialIds
+  );
 
   return sendResponse({
     res,
@@ -33,6 +38,7 @@ export const createCategory = tryCatch(async (req, res) => {
     },
   });
 });
+
 
 export const updateCategory = tryCatch(async (req, res) => {
   const { id } = req.params;
@@ -88,7 +94,6 @@ export const getAllCategories = tryCatch(async (req, res) => {
   }
 
   const result = await listCategoriesService(options);
-  console.log("12", result?.meta);
   
   return sendResponse({
     res,
@@ -111,7 +116,7 @@ export const getCategoryById = tryCatch(async (req, res) => {
   });
 });
 
-export const getMyCategories = tryCatch(async (req, res) => {
+export const getAssignedCategories = tryCatch(async (req, res) => {
   const userSocialId = req.user.socialId;
   const { page = 1, limit = 10, search = "" } = req.query;
 
@@ -132,7 +137,7 @@ export const getMyCategories = tryCatch(async (req, res) => {
     });
   }
 
-  const result = await getMyCategoriesService(userSocialId, {
+  const result = await getAssignedCategoriesService(userSocialId, {
     page: parsedPage,
     limit: parsedLimit,
     search: search.trim(),
@@ -146,6 +151,41 @@ export const getMyCategories = tryCatch(async (req, res) => {
     meta: result.meta,
   });
 });
+
+
+export const getUserCreatedCategoriesController = tryCatch(
+  async (req, res) => {
+    const userSocialId = req.user.socialId;
+    let { page, limit, search = "" } = req.query;
+
+    const parsedPage = page ? parseInt(page, 10) : null;
+    const parsedLimit = limit ? parseInt(limit, 10) : null;
+
+    if ((parsedPage && isNaN(parsedPage)) || (parsedLimit && isNaN(parsedLimit))) {
+      return sendErrorResponse({
+        res,
+        statusCode: 400,
+        message: "'page' and 'limit' must be valid numbers when provided.",
+      });
+    }
+
+    const result = await getUserCreatedCategoriesService(userSocialId, {
+      page: parsedPage,
+      limit: parsedLimit,
+      search: search.trim(),
+    });
+
+    return sendResponse({
+      res,
+      statusCode: 200,
+      message: "Fetched categories created by you",
+      data: result.data,
+      meta: result.meta,
+    });
+  }
+);
+
+
 
 export const deleteCategory = tryCatch(async (req, res) => {
   const { id } = req.params;

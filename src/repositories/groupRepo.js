@@ -26,42 +26,103 @@ export const deleteGroupById = async (id) => {
 
 export const getAllGroups = async (
   filter = {},
-  { page = 1, limit = 10 } = {}
+  { page, limit } = {}
 ) => {
-  const skip = (page - 1) * limit;
+  if (!page || !limit) {
+    const data = await GroupModel.find(filter).sort({ createdAt: -1 });
+    const total = await GroupModel.countDocuments(filter);
 
-  const [data, total] = await Promise.all([
-    GroupModel.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
-    GroupModel.countDocuments(filter),
-  ]);
+    return {
+      data,
+      total,
+    };
+  }
 
-  return { data, total };
+  const parsedPage = Number(page);
+  const parsedLimit = Number(limit);
+
+  const skip = (parsedPage - 1) * parsedLimit;
+
+  const data = await GroupModel.find(filter)
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(parsedLimit);
+
+  const total = await GroupModel.countDocuments(filter);
+
+  return {
+    data,
+    total,
+  };
 };
 
-export const getMyGroups = async (
+
+export const getAssignedGroups = async (
   userSocialId,
   filter = {},
-  { page = 1, limit = 10 } = {}
+  { page, limit } = {}
 ) => {
-  // Find all mappings where user is admin for items
   const mappings = await EntityAdminMapping.find({
     userSocialId,
-    entityType: "GroupModel",
+    entityType: "Group",
   });
 
-  const groupIds = mappings.map((m) => m.entityId);
+  const groupIds = mappings.map(m => m.entityId);
+console.log(groupIds, "idsss");
 
   if (groupIds.length === 0) {
     return { data: [], total: 0 };
   }
 
-  // 🔹 Add GroupModel ID filter + pagination
-  const skip = (page - 1) * limit;
-
   const query = { _id: { $in: groupIds }, ...filter };
 
+  if (!page || !limit) {
+    const data = await GroupModel.find(query).sort({ createdAt: -1 });
+    const total = await GroupModel.countDocuments(query);
+    return { data, total };
+  }
+
+  const parsedPage = Number(page);
+  const parsedLimit = Number(limit);
+  const skip = (parsedPage - 1) * parsedLimit;
+
   const [data, total] = await Promise.all([
-    GroupModel.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit),
+    GroupModel.find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parsedLimit),
+
+    GroupModel.countDocuments(query),
+  ]);
+
+  return { data, total };
+};
+
+
+
+export const getUserCreatedGroups = async (
+  userSocialId,
+  filter = {},
+  { page, limit } = {}
+) => {
+  const query = { createdBy: userSocialId, ...filter };
+
+  if (!page || !limit) {
+    const data = await GroupModel.find(query).sort({ createdAt: -1 });
+    const total = await GroupModel.countDocuments(query);
+    return { data, total };
+  }
+
+  const parsedPage = Number(page);
+  const parsedLimit = Number(limit);
+  const skip = (parsedPage - 1) * parsedLimit;
+
+  const [data, total] = await Promise.all([
+    GroupModel.find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parsedLimit),
+
     GroupModel.countDocuments(query),
   ]);
 

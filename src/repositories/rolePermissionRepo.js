@@ -40,7 +40,7 @@ export const hasRolePermission = async (roleIds, permissionId) => {
       permission: permissionId,
     });
 
-    return !!exists; // convert result to boolean
+    return !!exists; 
   } catch (error) {
     console.error("Error checking role permission:", error);
     throw new Error("Failed to check role permission");

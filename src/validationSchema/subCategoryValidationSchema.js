@@ -46,9 +46,7 @@ export const createSubCategorySchema = Joi.object({
 
 
 export const createStatusSubCategorySchema = Joi.object({
-  
-  isActive: Joi.boolean().default(true).messages({
-    "boolean.base": "isActive must be a boolean value",
+  isActive: Joi.boolean().strict().default(true).messages({
+    "boolean.base": "isActive must be true or false",
   }),
- 
 });

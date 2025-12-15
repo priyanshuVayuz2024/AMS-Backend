@@ -29,11 +29,6 @@ const policySchema = new mongoose.Schema(
       required: true,
     },
 
-    assignedToSocialId: {
-      type: String,        
-      required: true,
-    },
-
     isActive: {
       type: Boolean,
       default: true,

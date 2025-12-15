@@ -3,6 +3,7 @@ import {
   findUserByIdRepo,
   getAllUsers,
   getUserRoleFromUserRolesRepo,
+  updateUserById,
 } from "../repositories/userRepo.js";
 
 export const findUserById = async (id) => {
@@ -48,3 +49,21 @@ export const getAllUsersService = async ({ page, limit, search = "" }) => {
     };
 };
 
+ export const updateUserService = async (id, updates) => {
+   const user = await findUserById(id);
+   if (!user) throw new Error("User not found.");
+ 
+   const updatePayload = {};
+ 
+   if (updates.userId) updatePayload.userId = updates.userId.trim(); 
+   if (typeof updates.isActive === "boolean") {
+     updatePayload.isActive = updates.isActive;
+   }
+ 
+   const updatedUser = await updateUserById(id, updatePayload);
+ 
+   return {
+     updatedUser,
+     message: "User updated successfully.",
+   };
+ };

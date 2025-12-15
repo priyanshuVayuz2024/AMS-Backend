@@ -1,5 +1,4 @@
-import { getAllUsersService } from "../services/userServices.js";
-import mongoose from "mongoose";
+import { findUserById, getAllUsersService, updateUserService } from "../services/userServices.js";
 
 import {
   sendResponse,
@@ -7,6 +6,18 @@ import {
   tryCatch,
 } from "../util/responseHandler.js";
 
+
+export const getUserById = tryCatch(async (req, res) => {
+  const { id } = req.params;
+  const user = await findUserById(id);
+
+  return sendResponse({
+    res,
+    statusCode: 200,
+    message: "User fetched successfully",
+    data: user,
+  });
+});
 
 export const getAllUsers = tryCatch(async (req, res) => {
   const { page, limit, search = "" } = req.query;
@@ -47,3 +58,28 @@ export const getAllUsers = tryCatch(async (req, res) => {
   });
 });
 
+
+
+export const updateUser = tryCatch(async (req, res) => {
+  const { id } = req.params;
+  const { userId, isActive } = req.body;
+
+  const {
+    updatedUser: user,
+    message,
+  } = await updateUserService(
+    id,
+    { userId, isActive },
+  );
+
+  return sendResponse({
+    res,
+    statusCode: 200,
+    message: message || "User updated successfully",
+    data: {
+      user: {
+        ...(user.toObject?.() || user),
+      },
+    },
+  });
+});

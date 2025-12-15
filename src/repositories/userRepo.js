@@ -15,16 +15,12 @@ export const assignRoleToUsers = async (
     throw new Error("At least one user socialId is required.");
   }
 
-
   let message = null
 
-  // 1️⃣ Find the role
   const role = await Role.findOne({ name: roleName });
   if (!role) {
     throw new Error(`Role "${roleName}" not found`);
   }
-
-  // 2️⃣ Find all users by socialIds
   const users = await User.find({ socialId: { $in: userSocialIds } });
 
   const foundSocialIds = users.map((u) => u.socialId);
@@ -34,7 +30,6 @@ export const assignRoleToUsers = async (
     message = `Users not found for socialIds: ${missingIds.join(", ")}`
   }
 
-  // 3️⃣ Upsert UserRole mappings
   const ops = users.map((user) =>
     UserRole.findOneAndUpdate(
       { user: user._id, role: role._id, entityId },
@@ -42,10 +37,14 @@ export const assignRoleToUsers = async (
       { upsert: true, new: true }
     )
   );
-
   await Promise.all(ops);
-
   return message;
+};
+
+export const getUserRoleById = async (id) => {
+
+  const user = await UserRole.findOne({ user: id }).select("role");
+  return user ? user.role : null;
 };
 
 export const removeRoleFromUsers = async (
@@ -74,7 +73,6 @@ export const getUserRoleFromUserRolesRepo = async (id) => {
 };
 
 export const getAllUsers = async (filter = {}, options = {}) => {
-  
     let query = User.find(filter).sort({ createdAt: -1 });
     if (options.page !== undefined && options.limit !== undefined) {
         const skip = (options.page - 1) * options.limit;
@@ -88,3 +86,9 @@ export const getAllUsers = async (filter = {}, options = {}) => {
 
     return { data, total };
 };
+
+
+export const updateUserById = async (id, updateData) => {
+  return await User.findByIdAndUpdate(id, updateData, { new: true });
+};
+

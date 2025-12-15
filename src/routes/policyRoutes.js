@@ -1,10 +1,9 @@
 import express from "express";
 import { authenticate } from "../middlewares/AuthMiddleware.js";
-import { authorize } from "../middlewares/PermissionCheckMiddleware.js";
 import { validateRequestData } from "../middlewares/validateRequestData.js";
 
-import { createPolicy, getAllPolicies, getMyPolicies, getPolicyById, updatePolicy } from "../controllers/policyController.js";
-import policyValidationSchema from "../validationSchema/policyValidationsSchema.js";
+import { createPolicy, deletePolicy, getAllPolicies, getMyPolicies, getPolicyById, updatePolicy } from "../controllers/policyController.js";
+import {policyValidationSchema, policyStatusValidationSchema} from "../validationSchema/policyValidationsSchema.js";
 
 const router = express.Router();
 
@@ -39,5 +38,15 @@ router.put(
   validateRequestData(policyValidationSchema),
   updatePolicy
 );
+
+
+router.put(
+  "/status/:id",
+  authenticate,
+  validateRequestData(policyStatusValidationSchema),
+  updatePolicy
+)
+
+router.delete("/:id", authenticate, deletePolicy);
 
 export default router;

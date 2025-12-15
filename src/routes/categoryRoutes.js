@@ -3,8 +3,9 @@ import {
   createCategory,
   deleteCategory,
   getAllCategories,
+  getAssignedCategories,
   getCategoryById,
-  getMyCategories,
+  getUserCreatedCategoriesController,
   updateCategory,
 } from "../controllers/categoryController.js";
 import { authenticate } from "../middlewares/AuthMiddleware.js";
@@ -14,7 +15,6 @@ import {categoryValidationSchema, categoryStatusValidationSchema } from "../vali
 
 const router = express.Router();
 
-// 🔹 Create Category
 router.post(
   "/",
   authenticate,
@@ -25,7 +25,9 @@ router.post(
 
 router.get("/", authenticate, authorize("category:view"), getAllCategories);
 
-router.get("/my", authenticate, authorize("category:view"), getMyCategories);
+router.get("/assign", authenticate, authorize("category:view"), getAssignedCategories);
+router.get("/my", authenticate, authorize("category:view"), getUserCreatedCategoriesController);
+
 router.get("/:id", authenticate, authorize("category:view"), getCategoryById);
 
 router.put(

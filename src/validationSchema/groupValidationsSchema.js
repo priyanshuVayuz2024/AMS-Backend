@@ -34,7 +34,7 @@ const groupValidationSchema = Joi.object({
 });
 
 const groupStatusValidationSchema = Joi.object({
-    isActive: Joi.boolean().default(true).messages({
+    isActive: Joi.boolean().strict().default(true).messages({
         "boolean.base": "isActive must be true or false",
     }),
 });

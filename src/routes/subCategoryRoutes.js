@@ -2,13 +2,17 @@ import express from "express";
 import { authorize } from "../middlewares/PermissionCheckMiddleware.js";
 import { authenticate } from "../middlewares/AuthMiddleware.js";
 import { validateRequestData } from "../middlewares/validateRequestData.js";
-import { createStatusSubCategorySchema, createSubCategorySchema } from "../validationSchema/subCategoryValidationSchema.js";
+import {
+  createStatusSubCategorySchema,
+  createSubCategorySchema,
+} from "../validationSchema/subCategoryValidationSchema.js";
 import {
   createSubCategory,
   deleteSubCategory,
   getAllSubCategories,
-  getMySubCategories,
+  getAssignedSubCategories,
   getSubCategoryById,
+  getUserCreatedSubCategoriesController,
   updateSubCategory,
 } from "../controllers/subCategoryController.js";
 
@@ -30,10 +34,17 @@ router.get(
 );
 
 router.get(
-  "/my",
+  "/assign",
   authenticate,
   authorize("subCategory:view"),
-  getMySubCategories
+  getAssignedSubCategories
+);
+
+router.get(
+  "/my",
+  authenticate,
+  authorize("category:view"),
+  getUserCreatedSubCategoriesController
 );
 
 router.get(
@@ -58,7 +69,6 @@ router.put(
   validateRequestData(createStatusSubCategorySchema),
   updateSubCategory
 );
-
 
 router.delete(
   "/:id",

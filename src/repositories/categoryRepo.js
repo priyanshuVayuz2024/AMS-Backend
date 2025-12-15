@@ -21,28 +21,25 @@ export const findCategoryByName = async (name) => {
 };
 
 export const getAllCategories = async (filter = {}, options = {}) => {
-
   let query = Category.find(filter).sort({ createdAt: -1 });
   if (options.page !== undefined && options.limit !== undefined) {
     const skip = (options.page - 1) * options.limit;
     query = query.skip(skip).limit(options.limit);
   }
 
-   const [data, total] = await Promise.all([
-          query.exec(), 
-          Category.countDocuments(filter),
-    ]);
-
+  const [data, total] = await Promise.all([
+    query.exec(),
+    Category.countDocuments(filter),
+  ]);
 
   return { data, total };
 };
 
-export const getMyCategories = async (
+export const getAssignedCategories = async (
   userSocialId,
   filter = {},
   { page = 1, limit = 10 } = {}
 ) => {
-  // Find all mappings where user is admin for categories
   const mappings = await EntityAdminMapping.find({
     userSocialId,
     entityType: "Category",
@@ -54,7 +51,6 @@ export const getMyCategories = async (
     return { data: [], total: 0 };
   }
 
-  // Add category ID filter + pagination
   const skip = (page - 1) * limit;
 
   const query = { _id: { $in: categoryIds }, ...filter };
@@ -67,28 +63,47 @@ export const getMyCategories = async (
   return { data, total };
 };
 
+export const getUserCreatedCategories = async (
+  userSocialId,
+  filter = {},
+  { page, limit } = {}
+) => {
+  let query = { createdBy: userSocialId, ...filter };
+
+  let findQuery = Category.find(query).sort({ createdAt: -1 });
+
+  if (page && limit) {
+    const skip = (page - 1) * limit;
+    findQuery = findQuery.skip(skip).limit(limit);
+  }
+
+  const [data, total] = await Promise.all([
+    findQuery,
+    Category.countDocuments(query),
+  ]);
+
+  return { data, total };
+};
+
 export const deleteCategoryById = async (id) => {
-  // Delete items where parent is the Category
   await ItemModel.deleteMany({ parentType: "Category", parentId: id });
 
-  //  Find all subcategories of the Category
   const subcategories = await SubCategory.find({ categoryId: id });
-  const subcategoryIds = subcategories.map(sc => sc._id);
+  const subcategoryIds = subcategories.map((sc) => sc._id);
 
-  //  Delete items under these subcategories
   await ItemModel.deleteMany({
     parentType: "SubCategory",
-    parentId: { $in: subcategoryIds }
+    parentId: { $in: subcategoryIds },
   });
 
-  //   find all groups under those subcategories
-  const groups = await GroupModel.find({ subCategoryId: { $in: subcategoryIds } });
-  const groupIds = groups.map(g => g._id);
+  const groups = await GroupModel.find({
+    subCategoryId: { $in: subcategoryIds },
+  });
+  const groupIds = groups.map((g) => g._id);
 
-  //  delete items under these groups
   await ItemModel.deleteMany({
     parentType: "Group",
-    parentId: { $in: groupIds }
+    parentId: { $in: groupIds },
   });
 
   await GroupModel.deleteMany({ subCategoryId: { $in: subcategoryIds } });
@@ -97,4 +112,3 @@ export const deleteCategoryById = async (id) => {
 
   return await Category.findByIdAndDelete(id);
 };
-

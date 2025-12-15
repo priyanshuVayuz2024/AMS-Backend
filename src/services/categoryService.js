@@ -12,7 +12,8 @@ import {
   findCategoryById,
   findCategoryByName,
   getAllCategories,
-  getMyCategories,
+  getAssignedCategories,
+  getUserCreatedCategories,
   updateCategoryById,
 } from "../repositories/categoryRepo.js";
 
@@ -37,6 +38,7 @@ export const createCategoryService = async (data, adminSocialIds) => {
   const category = await createCategory({
     name: data.name.trim(),
     description: data.description?.trim(),
+    createdBy: data.createdBy,           
   });
 
   const adminDocs = adminSocialIds.map((id) => ({
@@ -54,6 +56,7 @@ export const createCategoryService = async (data, adminSocialIds) => {
 
   return { category, adminSocialIds, message };
 };
+
 
 export const updateCategoryService = async (id, updates, adminSocialIds) => {
   const category = await findCategoryById(id);
@@ -119,23 +122,18 @@ export const updateCategoryService = async (id, updates, adminSocialIds) => {
   return { updatedCategory, adminSocialIds: finalAdminSocialIds, message };
 };
 
-export const listCategoriesService = async ({
-  page,
-  limit ,
-  search = "",
-}) => {
+export const listCategoriesService = async ({ page, limit, search = "" }) => {
   const filter = {};
 
-  
-    if (search) {
-        filter.name = { $regex: search, $options: "i" }; 
-    }
+  if (search) {
+    filter.name = { $regex: search, $options: "i" };
+  }
 
-    const options = {};
-    if (page !== undefined && limit !== undefined) {
-        options.page = page;
-        options.limit = limit;
-    }
+  const options = {};
+  if (page !== undefined && limit !== undefined) {
+    options.page = page;
+    options.limit = limit;
+  }
 
   const { data, total } = await getAllCategories(filter, options);
 
@@ -143,7 +141,6 @@ export const listCategoriesService = async ({
     data.map(async (category) => {
       const categoryObj = category.toObject ? category.toObject() : category;
 
-      // Fetch admin mappings for this category using the same function as update
       const adminMappings = await getAdminsForEntity(category._id, ENTITY_TYPE);
       const adminSocialIds = (adminMappings || []).map(
         (mapping) => mapping.userSocialId
@@ -151,7 +148,7 @@ export const listCategoriesService = async ({
 
       return {
         ...categoryObj,
-        adminSocialIds, // 🔹 Now includes actual admin IDs from DB
+        adminSocialIds, 
       };
     })
   );
@@ -166,7 +163,6 @@ export const listCategoriesService = async ({
     },
   };
 };
-
 
 export const getCategoryByIdService = async (categoryId) => {
   const category = await findCategoryById(categoryId);
@@ -185,18 +181,17 @@ export const getCategoryByIdService = async (categoryId) => {
   };
 };
 
-export const getMyCategoriesService = async (
+export const getAssignedCategoriesService = async (
   userSocialId,
   { page = 1, limit = 10, search = "" }
 ) => {
   const filter = {};
 
-  // case-insensitive partial match
   if (search) {
     filter.name = { $regex: search, $options: "i" };
   }
 
-  const { data, total } = await getMyCategories(userSocialId, filter, {
+  const { data, total } = await getAssignedCategories(userSocialId, filter, {
     page,
     limit,
   });
@@ -213,20 +208,46 @@ export const getMyCategoriesService = async (
 };
 
 
+export const getUserCreatedCategoriesService = async (
+  userSocialId,
+  { page, limit, search = "" }
+) => {
+  const filter = {};
+
+  if (search) {
+    filter.name = { $regex: search, $options: "i" };
+  }
+
+  const { data, total } = await getUserCreatedCategories(
+    userSocialId,
+    filter,
+    { page, limit }
+  );
+
+  return {
+    data,
+    meta: {
+      total,
+      page: page || null,
+      limit: limit || null,
+      totalPages: page && limit ? Math.ceil(total / limit) : 1,
+    },
+  };
+};
 
 
 export const deleteCategoryService = async (id) => {
-    const deleted = await deleteCategoryById(id);
+  const deleted = await deleteCategoryById(id);
 
-    if (!deleted) {
-        return {
-            success: false,
-            message: "Category not found",
-        };
-    }
-
+  if (!deleted) {
     return {
-        success: true,
-        data: deleted,
+      success: false,
+      message: "Category not found",
     };
+  }
+
+  return {
+    success: true,
+    data: deleted,
+  };
 };

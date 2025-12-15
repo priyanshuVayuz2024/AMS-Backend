@@ -9,7 +9,7 @@ const userSchema = new mongoose.Schema(
     syncedAt: { type: Date, required: true, default: Date.now },
     isActive: { type: Boolean, required: true, default: true },
   },
-  { timestamps: true } // adds createdAt and updatedAt automatically
+  { timestamps: true } 
 );
 
 const User = mongoose.model("User", userSchema);

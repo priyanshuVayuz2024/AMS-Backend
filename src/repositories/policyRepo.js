@@ -14,6 +14,12 @@ export const updatePolicyById = async (id, updateData) => {
 };
 
 export const deletePolicyById = async (id) => {
+  
+  await EntityAdminMapping.deleteMany({
+    entityId: id,
+    entityType: "Policy",
+  });
+
   return await PolicyModel.findByIdAndDelete(id);
 };
 

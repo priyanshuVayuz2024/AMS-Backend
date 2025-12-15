@@ -22,7 +22,7 @@ export const validateRequestData = (schema) => {
         error: error.details.map((err) => err.message),
       });
     }
-    req.body = value; // sanitized input
+    req.body = value; 
     next();
   };
 };

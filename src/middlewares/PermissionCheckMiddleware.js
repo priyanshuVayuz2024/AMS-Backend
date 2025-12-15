@@ -18,7 +18,6 @@ export const authorize = (action, entityId = null) => {
 
       const userId = req?.user?.id;
 
-      // 1️⃣ Find the permission document
       const permission = await getPermissionByAction(action);
       console.log(permission, "12");
       
@@ -30,7 +29,6 @@ export const authorize = (action, entityId = null) => {
         });
       }
 
-      // 2️⃣ Find all roles of the user (with optional entityId context)
       const userRoles = await findUserRolesByUserIdAndEntityId(
         userId,
         entityId
@@ -40,11 +38,10 @@ export const authorize = (action, entityId = null) => {
         return sendErrorResponse({
           res,
           statusCode: 403,
-          message: "No roles assigned to user",
+          message: "No Data Found",
         });
       }
 
-      // 3️⃣ Check if any role has the required permission
       const roleIds = userRoles.map((ur) => ur.role._id);
 
       const hasPermission = await hasRolePermission(roleIds, permission._id);

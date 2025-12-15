@@ -21,3 +21,13 @@ export const userValidationSchema = Joi.object({
 
   isActive: Joi.boolean().default(true),
 });
+
+
+
+export const updateUserStatusSchema = Joi.object({
+  
+  isActive: Joi.boolean().strict().default(true).messages({
+    "boolean.base": "isActive must be a boolean value",
+  }),
+ 
+});

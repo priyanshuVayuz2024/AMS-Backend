@@ -5,12 +5,12 @@ const entityAdminMappingSchema = new mongoose.Schema(
         entityId: {
             type: mongoose.Schema.Types.ObjectId,
             required: true,
-            refPath: "entityType", // dynamic reference
+            refPath: "entityType", 
         },
         entityType: {
             type: String,
             required: true,
-            enum: ["Category", "SubCategory", "Group", "Item"], // add more as needed
+            enum: ["Category", "SubCategory", "Group", "Item", "Policy", "Sla"], 
         },
         userSocialId: {
             type: String,
@@ -20,7 +20,6 @@ const entityAdminMappingSchema = new mongoose.Schema(
     { timestamps: true }
 );
 
-// Ensure a user is not mapped twice to the same entity
 entityAdminMappingSchema.index({ entityId: 1, entityType: 1, userSocialId: 1 }, { unique: true });
 
 const EntityAdminMapping = mongoose.model("EntityAdminMapping", entityAdminMappingSchema);

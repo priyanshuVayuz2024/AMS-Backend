@@ -11,7 +11,7 @@ export const findSubCategoryByNameAndCategoryRepo = async (
   try {
     return await SubCategory.findOne({
       categoryId,
-      name: { $regex: new RegExp(`^${trimmedName}$`, "i") }, // case-insensitive match
+      name: { $regex: new RegExp(`^${trimmedName}$`, "i") }, 
     });
   } catch (error) {
     throw new Error(
@@ -37,27 +37,22 @@ export const findSubCategoryByName = async (name) => {
 };
 
 export const getSubCategoryByIdRepo = async (id) => {
-  //   return await SubCategory.findById(id).populate("categoryId");
   const objectId = new mongoose.Types.ObjectId(id);
 
   const result = await SubCategory.aggregate([
-    // Match the specific subcategory
     { $match: { _id: objectId } },
 
-    // Lookup category details
     {
       $lookup: {
-        from: "categories", // collection name (lowercase plural of model)
+        from: "categories", 
         localField: "categoryId",
         foreignField: "_id",
         as: "categoryId",
       },
     },
 
-    // Unwind categoryId (convert array → single object)
     { $unwind: "$categoryId" },
 
-    // Lookup UserRoles linked to this subcategory
     {
       $lookup: {
         from: "userroles",
@@ -67,7 +62,6 @@ export const getSubCategoryByIdRepo = async (id) => {
       },
     },
 
-    // Lookup users inside those userRoles
     {
       $lookup: {
         from: "users",
@@ -77,7 +71,6 @@ export const getSubCategoryByIdRepo = async (id) => {
       },
     },
 
-    // Optionally clean up the structure
     {
       $project: {
         _id: 1,
@@ -87,7 +80,7 @@ export const getSubCategoryByIdRepo = async (id) => {
         createdAt: 1,
         updatedAt: 1,
         categoryId: 1,
-        admins: "$adminUsers", // rename populated users
+        admins: "$adminUsers", 
       },
     },
   ]);
@@ -127,44 +120,87 @@ export const getAllSubCategoriesRepo = async (
   };
 };
 
-export const getMySubCategories = async (
+export const getAssignedSubCategories = async (
   userSocialId,
   filter = {},
-  { page = 1, limit = 10 } = {}
+  { page, limit } = {}
 ) => {
   const mappings = await EntityAdminMapping.find({
     userSocialId,
     entityType: "SubCategory",
   });
 
-  const subCategoryIds = mappings.map((m) => m.entityId);
+  const subCategoryIds = mappings.map(m => m.entityId);
 
   if (subCategoryIds.length === 0) {
     return { data: [], total: 0 };
   }
 
-  const skip = (page - 1) * limit;
-
   const query = { _id: { $in: subCategoryIds }, ...filter };
 
+  if (!page || !limit) {
+    const data = await SubCategory.find(query).sort({ createdAt: -1 });
+    const total = await SubCategory.countDocuments(query);
+    return { data, total };
+  }
+
+  const parsedPage = Number(page);
+  const parsedLimit = Number(limit);
+  const skip = (parsedPage - 1) * parsedLimit;
+
   const [data, total] = await Promise.all([
-    SubCategory.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit),
+    SubCategory.find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parsedLimit),
+
     SubCategory.countDocuments(query),
   ]);
 
   return { data, total };
 };
 
+
+
+export const getUserCreatedSubCategories = async (
+  userSocialId,
+  filter = {},
+  { page, limit } = {}
+) => {
+  const query = { createdBy: userSocialId, ...filter };
+
+  if (!page || !limit) {
+    const data = await SubCategory.find(query).sort({ createdAt: -1 });
+    const total = await SubCategory.countDocuments(query);
+    return { data, total };
+  }
+
+  const parsedPage = Number(page);
+  const parsedLimit = Number(limit);
+  const skip = (parsedPage - 1) * parsedLimit;
+
+  const [data, total] = await Promise.all([
+    SubCategory.find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parsedLimit),
+
+    SubCategory.countDocuments(query),
+  ]);
+
+  return { data, total };
+};
+
+
+
+
 export const deleteSubCategoryById = async (id) => {
   await ItemModel.deleteMany({ parentType: "SubCategory", parentId: id });
 
-  // Find all groups belonging to this subcategory
   const groups = await GroupModel.find({ subCategoryId: id });
 
-  // Extract their IDs
   const groupIds = groups.map((g) => g._id);
 
-  // Delete items under those groups
   await ItemModel.deleteMany({
     parentType: "Group",
     parentId: { $in: groupIds },

@@ -1,3 +1,4 @@
+import Category from "../models/CategoryModel.js";
 import {
   addAdminMapping,
   addMultiAdminMappings,
@@ -11,8 +12,9 @@ import {
   findSubCategoryByName,
   findSubCategoryByNameAndCategoryRepo,
   getAllSubCategoriesRepo,
-  getMySubCategories,
+  getAssignedSubCategories,
   getSubCategoryByIdRepo,
+  getUserCreatedSubCategories,
   updateSubCategoryById,
 } from "../repositories/subCategoryRepo.js";
 import {
@@ -24,9 +26,8 @@ import { createError } from "../util/responseHandler.js";
 const ENTITY_TYPE = "SubCategory";
 
 export const createSubCategoryService = async (data) => {
-  const { categoryId, name, description, adminSocialIds } = data;
+  const { categoryId, name, description, adminSocialIds, createdBy } = data;
 
-  // Basic validations
   if (!categoryId) throw new Error("Category ID is required.");
   if (!name || name.trim() === "")
     throw new Error("Sub-category name is required.");
@@ -51,6 +52,7 @@ export const createSubCategoryService = async (data) => {
     categoryId,
     name: trimmedName,
     description: description?.trim(),
+    createdBy : createdBy,
   });
 
   const adminDocs = adminSocialIds.map((id) => ({
@@ -80,9 +82,11 @@ export const updateSubCategoryService = async (id, updates, adminSocialIds) => {
     if (existing) throw new Error("Sub-category name already exists.");
   }
 
+
   let updatePayload = {
     name: updates.name?.trim() || subCategory.name,
     description: updates.description?.trim() || subCategory.description,
+    categoryId: updates.categoryId || subCategory.categoryId,
   };
 
   if (typeof updates.isActive === "boolean") {
@@ -91,6 +95,8 @@ export const updateSubCategoryService = async (id, updates, adminSocialIds) => {
 
   const updatedSubCategory = await updateSubCategoryById(id, updatePayload);
   let finalAdminSocialIds = adminSocialIds;
+
+console.log(finalAdminSocialIds,"finalAdminSocialIds");
 
   // Update admin mapping if provided
   if (Array.isArray(adminSocialIds)) {
@@ -135,6 +141,30 @@ export const updateSubCategoryService = async (id, updates, adminSocialIds) => {
   return { updatedSubCategory, adminSocialIds: finalAdminSocialIds, message };
 };
 
+
+const enrichWithCategoryName = async (data) => {
+  const categoryIds = [...new Set(data.map(sc => sc.categoryId))];
+
+  const categories = await Category.find(
+    { _id: { $in: categoryIds } },
+    { name: 1 }
+  );
+
+  const categoryNameMap = new Map();
+  categories.forEach(cat =>
+    categoryNameMap.set(cat._id.toString(), cat.name)
+  );
+
+  return data.map(sc => {
+    const obj = sc.toObject ? sc.toObject() : sc;
+    return {
+      ...obj,
+      categoryName: categoryNameMap.get(obj.categoryId.toString()),
+    };
+  });
+};
+
+
 export const getSubCategoryByIdService = async (id) => {
   if (!id) {
     throw new Error("SubCategory ID is required");
@@ -157,7 +187,7 @@ export const getSubCategoryByIdService = async (id) => {
 };
 
 export const listSubCategoriesService = async ({
-  page ,
+  page,
   limit,
   search = "",
   categoryId,
@@ -165,24 +195,53 @@ export const listSubCategoriesService = async ({
   const filter = {};
 
   if (search) {
-    filter.name = { $regex: search, $options: "i" }; 
+    filter.name = { $regex: search, $options: "i" };
   }
   if (categoryId) {
     filter.categoryId = categoryId;
   }
 
+  // Get all subcategories
   const { data, total } = await getAllSubCategoriesRepo(filter, {
     page,
     limit,
   });
 
+  // Extract unique categoryIds from the subcategory data
+  const categoryIds = [...new Set(data.map((sc) => sc.categoryId))]; 
+    console.log(categoryIds, "categoryIds");
+
+  const categories = await Category.find(
+    { _id: { $in: categoryIds } },
+    { name: 1 }
+  );
+  console.log(categories, "categories");
+
+  const categoryNameMap = new Map();
+  categories.forEach((cat) =>
+    categoryNameMap.set(cat._id.toString(), cat.name)
+  );
+  console.log(categoryNameMap, "categoryNameMap");
+
+  // Enrich subcategories with adminSocialIds + categoryName
   const enrichedData = await Promise.all(
     data.map(async (subCategory) => {
-      const subCategoryObj = subCategory.toObject ? subCategory.toObject() : subCategory;
+      const subCategoryObj = subCategory.toObject
+        ? subCategory.toObject()
+        : subCategory;
 
-      const adminMappings = await getAdminsForEntity(subCategory._id, ENTITY_TYPE);
+      // Admins
+      const adminMappings = await getAdminsForEntity(
+        subCategory._id,
+        ENTITY_TYPE
+      );
       const adminSocialIds = (adminMappings || []).map(
         (mapping) => mapping.userSocialId
+      );
+
+      // Map categoryName from the subcategory's categoryId
+      subCategoryObj.categoryName = categoryNameMap.get(
+        subCategoryObj.categoryId.toString()
       );
 
       return {
@@ -203,23 +262,26 @@ export const listSubCategoriesService = async ({
   };
 };
 
-export const getMySubCategoriesService = async (
+export const getAssignedSubCategoriesService = async (
   userSocialId,
-  { page = 1, limit = 10, search = "" }
+  { page, limit, search = "", categoryId }
 ) => {
   const filter = {};
 
-  if (search) {
-    filter.name = { $regex: search, $options: "i" }; // case-insensitive name search
-  }
+  if (search) filter.name = { $regex: search, $options: "i" };
 
-  const { data, total } = await getMySubCategories(userSocialId, filter, {
-    page,
-    limit,
-  });
+  if (categoryId) filter.categoryId = categoryId;
+
+  const { data, total } = await getAssignedSubCategories(
+    userSocialId,
+    filter,
+    { page, limit }
+  );
+
+  const enrichedData = await enrichWithCategoryName(data);
 
   return {
-    data,
+    data: enrichedData,
     meta: {
       total,
       page,
@@ -230,18 +292,50 @@ export const getMySubCategoriesService = async (
 };
 
 
+
+export const getUserCreatedSubCategoriesService = async (
+  userSocialId,
+  { page, limit, search = "", categoryId }
+) => {
+  const filter = {};
+
+  if (search) filter.name = { $regex: search, $options: "i" };
+
+  if (categoryId) filter.categoryId = categoryId;
+
+  const { data, total } = await getUserCreatedSubCategories(
+    userSocialId,
+    filter,
+    { page, limit }
+  );
+
+  const enrichedData = await enrichWithCategoryName(data);
+
+  return {
+    data: enrichedData,
+    meta: {
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
+};
+
+
+
 export const deleteSubCategoryService = async (id) => {
-    const deleted = await deleteSubCategoryById(id);
+  const deleted = await deleteSubCategoryById(id);
 
-    if (!deleted) {
-        return {
-            success: false,
-            message: "SubCategory not found",
-        };
-    }
-
+  if (!deleted) {
     return {
-        success: true,
-        data: deleted,
+      success: false,
+      message: "SubCategory not found",
     };
+  }
+
+  return {
+    success: true,
+    data: deleted,
+  };
 };

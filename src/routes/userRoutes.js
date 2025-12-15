@@ -1,14 +1,24 @@
 import express from "express";
 
-import { getAllUsers } from "../controllers/userController.js";
+import { getAllUsers, getUserById, updateUser } from "../controllers/userController.js";
 
 import { authenticate } from "../middlewares/AuthMiddleware.js";
-import { authorize } from "../middlewares/PermissionCheckMiddleware.js";
+import { updateUserStatusSchema } from "../validationSchema/userValidationSchema.js";
+import { validateRequestData } from "../middlewares/validateRequestData.js";
 const router = express.Router();
 
 router.get("/", authenticate, getAllUsers);
 
+router.get(
+  "/:id",
+  authenticate,
+  getUserById
+);
 
-
-
+router.put(
+  "/status/:id",
+  authenticate,
+  validateRequestData(updateUserStatusSchema),
+  updateUser
+)
 export default router;

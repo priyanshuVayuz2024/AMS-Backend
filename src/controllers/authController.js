@@ -26,7 +26,6 @@ export const login = async (req, res) => {
       });
     }
 
-    // 🔹 Step 1: Validate credentials with Profile Backend
     const { data } = await axios.post(PROFILE_BACKEND_URL, {
       adminlogin: false,
       email: socialId,
@@ -34,7 +33,10 @@ export const login = async (req, res) => {
       requestfrom: "social",
     });
 
-    if (!data && data.status != 200) {
+    console.log("Login", data);
+    
+
+    if (data?.code == 404 || data?.code == 400) {
       return sendErrorResponse({
         res,
         statusCode: 401,
@@ -42,7 +44,6 @@ export const login = async (req, res) => {
       });
     }
 
-    // 🔹 Step 2: Upsert user in local DB
     let user = await User.findOne({ socialId });
 
     if (!user) {
@@ -74,7 +75,7 @@ export const login = async (req, res) => {
         roleMap.set(roleId, {
           role: ur.role.name,
           roleId: roleId,
-          permissions: [], // filled later
+          permissions: [], 
           entities: [],
         });
       }

@@ -19,6 +19,11 @@ const subCategorySchema = new mongoose.Schema(
       trim: true,
     },
 
+    createdBy: {
+      type: String,
+      required: true,
+    },
+
     isActive: {
       type: Boolean,
       required: true,
@@ -28,7 +33,6 @@ const subCategorySchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Optional: prevent duplicate sub-categories under the same category
 subCategorySchema.index({ categoryId: 1, name: 1 }, { unique: true });
 
 const SubCategory = await mongoose.model("SubCategory", subCategorySchema);
