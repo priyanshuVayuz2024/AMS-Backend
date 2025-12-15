@@ -8,11 +8,16 @@ const rolePermissionSchema = new mongoose.Schema(
       ref: "Permission",
       required: true,
     },
+    module: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Module",
+      required: true,
+    },
   },
   { timestamps: true }
 );
 
-rolePermissionSchema.index({ role: 1, permission: 1 }, { unique: true });
+rolePermissionSchema.index({ role: 1, permission: 1, module: 1 }, { unique: true });
 
 const RolePermission = mongoose.model("RolePermission", rolePermissionSchema);
 
