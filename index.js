@@ -14,6 +14,7 @@ import reportRoutes from "./src/routes/reportRoutes.js";
 import handOverRoutes from "./src/routes/handOverRoutes.js";
 import transferRoutes from "./src/routes/transferRoutes.js";
 import approvalRoutes from "./src/routes/approvalRoutes.js";
+import moduleRoutes from "./src/routes/moduleRoutes.js";
 
 import { errorHandler } from "./src/util/responseHandler.js";
 const PORT = process.env.PORT || 5000;
@@ -36,7 +37,7 @@ app.use("/api/report", reportRoutes);
 app.use("/api/handover", handOverRoutes);
 app.use("/api/transfer", transferRoutes);
 app.use("/api/approval", approvalRoutes);
-
+app.use("/api/module", moduleRoutes);
 
 app.use(errorHandler);
 app.listen(PORT, () => {

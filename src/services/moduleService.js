@@ -1,0 +1,114 @@
+import {
+  createModule,
+  deleteModuleById,
+  findModuleById,
+  findModuleByName,
+  getAllModules,
+  updateModuleById,
+} from "../repositories/moduleRepo.js";
+
+/**
+ * Create Module
+ */
+export const createModuleService = async (data) => {
+  if (!data.name || data.name.trim() === "") {
+    throw new Error("Module name is required.");
+  }
+
+  const trimmedName = data.name.trim();
+
+  const existing = await findModuleByName(trimmedName);
+  if (existing) {
+    throw new Error("Module name already exists.");
+  }
+
+  const module = await createModule({
+    name: trimmedName,
+    description: data.description?.trim(),
+  });
+
+  return { module };
+};
+
+/**
+ * Update Module
+ */
+export const updateModuleService = async (id, updates) => {
+  const module = await findModuleById(id);
+  if (!module) {
+    throw new Error("Module not found.");
+  }
+
+  const newName = updates.name?.trim();
+  if (newName && newName !== module.name) {
+    const existing = await findModuleByName(newName);
+    if (existing) {
+      throw new Error("Module name already exists.");
+    }
+  }
+
+  const updatePayload = {
+    name: updates.name?.trim() || module.name,
+    description: updates.description?.trim() || module.description,
+  };
+
+  if (typeof updates.isActive === "boolean") {
+    updatePayload.isActive = updates.isActive;
+  }
+
+  const updatedModule = await updateModuleById(id, updatePayload);
+
+  return { updatedModule };
+};
+
+/**
+ * List Modules (search + conditional pagination)
+ */
+export const listModulesService = async ({ page, limit, search = "" }) => {
+  const { data, total } = await getAllModules(
+    { search },
+    { page, limit }
+  );
+
+  return {
+    data,
+    meta: {
+      total,
+      page: page || null,
+      limit: limit || null,
+      totalPages:
+        page || limit ? Math.ceil(total / (limit || 10)) : 1,
+    },
+  };
+};
+
+/**
+ * Get Module by ID
+ */
+export const getModuleByIdService = async (moduleId) => {
+  const module = await findModuleById(moduleId);
+  if (!module) {
+    throw new Error("Module not found.");
+  }
+
+  return module.toObject ? module.toObject() : module;
+};
+
+/**
+ * Delete Module
+ */
+export const deleteModuleService = async (id) => {
+  const deleted = await deleteModuleById(id);
+
+  if (!deleted) {
+    return {
+      success: false,
+      message: "Module not found",
+    };
+  }
+
+  return {
+    success: true,
+    data: deleted,
+  };
+};

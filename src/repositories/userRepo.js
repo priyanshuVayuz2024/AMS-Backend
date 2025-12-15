@@ -69,8 +69,11 @@ export const removeRoleFromUsers = async (
 };
 
 export const getUserRoleFromUserRolesRepo = async (id) => {
-  return await UserRole.find({ user: id }).populate("role").populate("user");
+  return await UserRole.find({ userId: id })
+    .populate("roleId")  
+    .populate("userId");
 };
+
 
 export const getAllUsers = async (filter = {}, options = {}) => {
     let query = User.find(filter).sort({ createdAt: -1 });

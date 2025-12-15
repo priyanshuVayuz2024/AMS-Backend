@@ -34,7 +34,6 @@ export const login = async (req, res) => {
     });
 
     console.log("Login", data);
-    
 
     if (data?.code == 404 || data?.code == 400) {
       return sendErrorResponse({
@@ -62,20 +61,19 @@ export const login = async (req, res) => {
       user.syncedAt = new Date();
       await user.save();
     }
+    const userRoles = await getUserRoleFromUserRolesService(user?._id);
+    console.log(userRoles?.roleId?.name, "userRoles");
 
-    const userRoles = await getUserRoleFromUserRolesService(user._id);
-    console.log(userRoles);
     // Group userRoles by roleId
     const roleMap = new Map();
 
     for (const ur of userRoles) {
-      const roleId = ur.role._id.toString();
-
+      const roleId = ur.roleId?._id.toString();
       if (!roleMap.has(roleId)) {
         roleMap.set(roleId, {
-          role: ur.role.name,
+          role: ur.roleId?.name,
           roleId: roleId,
-          permissions: [], 
+          permissions: [],
           entities: [],
         });
       }
@@ -88,7 +86,7 @@ export const login = async (req, res) => {
             user.socialId
           );
 
-        if (entityMapping & entityMapping?.entityType ) {
+        if (entityMapping & entityMapping?.entityType) {
           const Model = mongoose.model(entityMapping.entityType);
           const entityData = await Model.findById(entityMapping.entityId);
 
@@ -96,9 +94,9 @@ export const login = async (req, res) => {
             const roleObj = roleMap.get(roleId);
 
             // avoid duplicate entities
-            if (!roleObj.entities.some((e) => e.id.equals(entityData._id))) {
+            if (!roleObj.entities.some((e) => e.id.equals(entityData?._id))) {
               roleObj.entities.push({
-                id: entityData._id,
+                id: entityData?._id,
                 name: entityData.name,
               });
             }
@@ -111,12 +109,19 @@ export const login = async (req, res) => {
     for (const [roleId, roleObj] of roleMap.entries()) {
       const permissions = await getPermissionsByRoleIdService(roleId);
       roleObj.permissions = permissions.map((p) => p.permission.action);
+      
     }
 
     const roles = Array.from(roleMap.values());
 
+    console.log(roles, "roles");
+
+    const isadmin = roles.some(
+      (r) => r.role && r.role.toLowerCase() === "admin"
+    );
+
     const token = jwt.sign(
-      { id: user._id, socialId: user.socialId },
+      { id: user?._id, socialId: user.socialId },
       JWT_SECRET,
       { expiresIn: JWT_EXPIRY }
     );
@@ -128,13 +133,14 @@ export const login = async (req, res) => {
       data: {
         token,
         user: {
-          id: user._id,
+          id: user?._id,
           name: user.name,
           email: user.email,
           socialId: user.socialId,
           department: user.department,
         },
         roles,
+        isadmin,
       },
     });
   } catch (err) {

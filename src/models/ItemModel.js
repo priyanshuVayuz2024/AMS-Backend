@@ -40,6 +40,6 @@ const itemSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-itemSchema.index({ name: 1, parentId: 1, parentType: 1 }, { unique: true });
+itemSchema.index({ name: 1 }, { unique: true });
 
 export default mongoose.model("Item", itemSchema);
