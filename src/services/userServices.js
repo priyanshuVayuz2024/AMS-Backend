@@ -1,3 +1,4 @@
+import UserRole from "../models/UserRoleModel.js";
 import { getPermissionsByRoleIdRepo } from "../repositories/rolePermissionRepo.js";
 import {
   findUserByIdRepo,
@@ -10,9 +11,17 @@ export const findUserById = async (id) => {
   return await findUserByIdRepo(id);
 };
 
-export const getUserRoleFromUserRolesService = async (id) => {
-  return await getUserRoleFromUserRolesRepo(id);
+export const getUserRoleFromUserRolesService = async (socialId) => {
+  return await UserRole.find({
+    assignedToSocialId: socialId,
+  })
+  .populate({
+    path: "roleId",
+    select: "name"   
+  });
 };
+
+
 
 
 

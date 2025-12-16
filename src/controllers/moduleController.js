@@ -87,7 +87,11 @@ export const getAllModules = tryCatch(async (req, res) => {
     payload.limit = parsedLimit;
   }
 
-  const result = await listModulesService(payload);
+  // 🔐 Logged-in user (set by auth middleware)
+  const loggedInUser = req.user;
+  console.log(loggedInUser, "usersssss");
+  
+  const result = await listModulesService(payload, loggedInUser);
 
   return sendResponse({
     res,

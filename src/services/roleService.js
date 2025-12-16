@@ -83,10 +83,12 @@ export const listRolesService = async ({ page, limit, search = "" }) => {
     const allModules = await Module.find({});
 
     const allPermissions = await Permission.find({});
+    const actions = allPermissions.map(p => p.action);
+    
 
     adminRole.modules = allModules.map((mod) => ({
       module: mod,
-      permissions: allPermissions, 
+      permissions: actions, 
     }));
   }
 

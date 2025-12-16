@@ -4,34 +4,49 @@ import Role from "../models/RoleModel.js";
 export const requireAdmin = async (req, res, next) => {
   try {
     if (!req.user) {
-      return res.status(401).json({ success: false, message: "Unauthorized" });
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized",
+      });
     }
 
-    const userRole = await UserRole.findOne({ userId: req.user.id });
+    const userSocialId = req.user.socialId;
 
-    if (!userRole) {
-      return res
-        .status(403)
-        .json({ success: false, message: "Access denied. No role assigned." });
+    // 1️⃣ Find active roles & populate roleId
+    const userRoles = await UserRole.find({
+      assignedToSocialId: userSocialId,
+    }).populate("roleId");
+    console.log(userRoles,"userROles");
+    
+
+    // 2️⃣ No roles assigned
+    if (!userRoles.length) {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied. No role assigned.",
+      });
     }
 
-    const id = userRole.get("roleId");
-    const role = await Role.findById(id);
+    
+    // 3️⃣ Check admin role
+    const isAdmin = userRoles.some(
+      (ur) => ur.roleId?.name?.toLowerCase() === "admin"
+    );
+    
 
-    if (!role || role.name !== "admin") {
-      return res
-        .status(403)
-        .json({
-          success: false,
-          message: "Access denied. Admin role required.",
-        });
+    if (!isAdmin) {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied. Admin role required.",
+      });
     }
 
     next();
   } catch (error) {
-    console.error(error);
-    return res
-      .status(500)
-      .json({ success: false, message: "Authorization failed" });
+    console.error("Admin middleware error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Authorization failed",
+    });
   }
 };

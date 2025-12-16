@@ -16,7 +16,7 @@ export const authorize = (action, entityId = null) => {
         });
       }
 
-      const userId = req?.user?.id;
+      // const userId = req?.user?.id;
 
       const permission = await getPermissionByAction(action);
       console.log(permission, "12");

@@ -18,7 +18,12 @@ const roleModuleValidationSchema = Joi.object({
   }),
 
   permissions: Joi.array()
-    .items(objectId.required())
+    .items(
+      Joi.string()
+        .trim()
+        .valid("create", "read", "update", "delete") 
+        .required()
+    )
     .min(1)
     .max(4)
     .required()
@@ -27,8 +32,10 @@ const roleModuleValidationSchema = Joi.object({
       "array.min": "At least one permission is required per module",
       "array.max": "Maximum 4 permissions allowed per module",
       "any.required": "Permissions are required",
+      "any.only": "Invalid permission value",
     }),
 });
+
 
 const roleValidationSchema = Joi.object({
   name: Joi.string().trim().required().messages({

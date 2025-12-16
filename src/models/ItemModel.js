@@ -13,10 +13,6 @@ const itemSchema = new mongoose.Schema(
       trim: true,
     },
 
-    assignedToSocialId: {
-      type: String, 
-      default: [],
-    },
 
     reportCount: {
       type: Number,

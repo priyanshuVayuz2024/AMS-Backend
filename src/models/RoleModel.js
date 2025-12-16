@@ -9,14 +9,12 @@ const roleModuleSchema = new mongoose.Schema(
     },
     permissions: {
       type: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Permission",
+        type: String,
+        enum: ["create", "read", "update", "delete"],
       }],
       validate: [
         {
-          validator: function (v) {
-            return v.length >= 1 && v.length <= 4;
-          },
+          validator: v => v.length >= 1 && v.length <= 4,
           message: "Permissions must be between 1 and 4 per module",
         },
       ],
@@ -25,6 +23,7 @@ const roleModuleSchema = new mongoose.Schema(
   },
   { _id: false }
 );
+
 
 const roleSchema = new mongoose.Schema(
   {

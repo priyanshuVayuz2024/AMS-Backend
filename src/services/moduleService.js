@@ -6,6 +6,8 @@ import {
   getAllModules,
   updateModuleById,
 } from "../repositories/moduleRepo.js";
+import { checkUserHasRole } from "../repositories/roleAssigneeRepo.js";
+
 
 /**
  * Create Module
@@ -61,12 +63,23 @@ export const updateModuleService = async (id, updates) => {
   return { updatedModule };
 };
 
-/**
- * List Modules (search + conditional pagination)
- */
-export const listModulesService = async ({ page, limit, search = "" }) => {
+export const listModulesService = async (
+  { page, limit, search = "" },
+  user
+) => {
+  const filters = { search };
+
+  const isAdminAssignment = await checkUserHasRole(
+    user.socialId,
+    "admin"
+  );
+
+  if (!isAdminAssignment || !isAdminAssignment.roleId) {
+    filters.isActive = true;
+  }
+
   const { data, total } = await getAllModules(
-    { search },
+    filters,
     { page, limit }
   );
 
@@ -81,6 +94,7 @@ export const listModulesService = async ({ page, limit, search = "" }) => {
     },
   };
 };
+
 
 /**
  * Get Module by ID

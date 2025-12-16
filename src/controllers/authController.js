@@ -61,8 +61,10 @@ export const login = async (req, res) => {
       user.syncedAt = new Date();
       await user.save();
     }
-    const userRoles = await getUserRoleFromUserRolesService(user?._id);
-    console.log(userRoles?.roleId?.name, "userRoles");
+
+    
+    const userRoles = await getUserRoleFromUserRolesService(user.socialId);
+    console.log(userRoles, "userRoles");
 
     // Group userRoles by roleId
     const roleMap = new Map();
@@ -108,7 +110,7 @@ export const login = async (req, res) => {
     // Add permissions for each role
     for (const [roleId, roleObj] of roleMap.entries()) {
       const permissions = await getPermissionsByRoleIdService(roleId);
-      roleObj.permissions = permissions.map((p) => p.permission.action);
+      roleObj.permissions = permissions.map((p) => p.permission.name);
       
     }
 

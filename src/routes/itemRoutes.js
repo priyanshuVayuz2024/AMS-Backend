@@ -7,25 +7,22 @@ import {
   updateItem,
   deleteItem,
   uploadItemsBulk,
-  getAssignedItems,
-  getUserCreatedItemsController,
 } from "../controllers/itemController.js";
-
+import { checkModulePermission} from "../middlewares/ModulePermissionCheckMiddleware.js";
 import { authenticate } from "../middlewares/AuthMiddleware.js";
-import { authorize } from "../middlewares/PermissionCheckMiddleware.js";
 import { validateRequestData } from "../middlewares/validateRequestData.js";
 import {
   itemValidationSchema,
-  itemStatusalidationSchema,
+  itemStatusValidationSchema,
 } from "../validationSchema/itemValidationSchema.js";
-const router = express.Router();
 
+const router = express.Router();
 const upload = multer({ dest: "uploads/" }); 
 
 router.post(
   "/",
   authenticate,
-  authorize("item:create"),
+  checkModulePermission("Asset", "create"),
   validateRequestData(itemValidationSchema),
   createItem
 );
@@ -33,32 +30,46 @@ router.post(
 router.post(
   "/bulk-upload",
   authenticate,
-  authorize("item:create"),
+  checkModulePermission("Asset", "create"),
   upload.single("file"),
   uploadItemsBulk
 );
 
-router.get("/", authenticate, authorize("item:view"), getAllItems);
-router.get("/assign", authenticate, authorize("item:view"), getAssignedItems);
-router.get("/my", authenticate, authorize("item:view"), getUserCreatedItemsController);
-router.get("/:id", authenticate, authorize("item:view"), getItemById);
+router.get(
+  "/",
+  authenticate,
+  checkModulePermission("Asset", "read"),
+  getAllItems
+);
+
+router.get(
+  "/:id",
+  authenticate,
+  checkModulePermission("Asset", "read"),
+  getItemById
+);
 
 router.put(
   "/:id",
   authenticate,
+  checkModulePermission("Asset", "update"),
   validateRequestData(itemValidationSchema),
-  authorize("item:update"),
   updateItem
 );
 
 router.put(
   "/status/:id",
   authenticate,
-  validateRequestData(itemStatusalidationSchema),
-  authorize("item:update"),
+  checkModulePermission("Asset", "update"),
+  validateRequestData(itemStatusValidationSchema),
   updateItem
 );
 
-router.delete("/:id", authenticate, deleteItem);
+router.delete(
+  "/:id",
+  authenticate,
+  checkModulePermission("Asset", "delete"),
+  deleteItem
+);
 
 export default router;

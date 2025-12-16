@@ -70,8 +70,9 @@ export const removeRoleFromUsers = async (
 
 export const getUserRoleFromUserRolesRepo = async (id) => {
   return await UserRole.find({ userId: id })
-    .populate("roleId")  
-    .populate("userId");
+    .populate("roleId") 
+    .populate("userId"); 
+    
 };
 
 

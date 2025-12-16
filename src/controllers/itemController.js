@@ -7,10 +7,7 @@ import {
   listItemsService,
   updateItemService,
   ItemBulkService,
-  getAssignedItemsService,
-  getUserCreatedItemsService,
 } from "../services/itemService.js";
-import mongoose from "mongoose";
 
 import {
   sendResponse,
@@ -18,38 +15,26 @@ import {
   tryCatch,
 } from "../util/responseHandler.js";
 
+/**
+ * Create a new item (no assigned user)
+ */
 export const createItem = tryCatch(async (req, res) => {
-  const {
-    name,
-    description,
-    parentType,
-    parentId,
-    assignedToSocialId,
-    parentItemId,
-  } = req.body;
-
+  const { name, description, isActive } = req.body;
   const createdBy = req.user.socialId;
 
-  const { item, message } = await createItemService(
-    {
-      name,
-      description,
-      parentType,
-      parentId,
-      parentItemId,
-      createdBy,
-    },
-    assignedToSocialId
-  );
+  const { item } = await createItemService({
+    name,
+    description,
+    createdBy,
+    isActive,
+  });
 
-  const qrUrl = `http://localhost:5000/report?itemId=${item.id}`;
-  // const qrUrl = `https://ams-backend-2-0.onrender.com/report?itemId=${item.id}`;
-
+  const qrUrl = `http://localhost:5000/report?itemId=${item._id}`;
   const qrBase64 = await QRCode.toDataURL(qrUrl);
 
   const uploadResponse = await cloudinary.uploader.upload(qrBase64, {
     folder: "qr",
-    public_id: `item-${item.id}`,
+    public_id: `item-${item._id}`,
     overwrite: true,
   });
 
@@ -58,63 +43,49 @@ export const createItem = tryCatch(async (req, res) => {
   return sendResponse({
     res,
     statusCode: 201,
-    message: message || "Item created successfully",
+    message: "Item created successfully",
     data: item,
   });
 });
 
+/**
+ * Update an item
+ */
 export const updateItem = tryCatch(async (req, res) => {
   const { id } = req.params;
-  const { name, description, assignedToSocialId, isActive } = req.body;
+  const { name, description, isActive } = req.body;
 
-  const { updatedItem: item, message } = await updateItemService(
-    id,
-    { name, description, isActive },
-    assignedToSocialId
-  );
+  const { updatedItem: item } = await updateItemService(id, {
+    name,
+    description,
+    isActive,
+  });
 
   return sendResponse({
     res,
     statusCode: 200,
-    message: message || "Item updated successfully",
+    message: "Item updated successfully",
     data: item,
   });
 });
 
+/**
+ * List items with optional pagination and search
+ */
 export const getAllItems = tryCatch(async (req, res) => {
-  const {
-    page,
-    limit,
-    search = "",
-    categoryId = "",
-    subCategoryId = "",
-  } = req.query;
+  const { page, limit, search = "" } = req.query;
 
   const options = { search: search.trim() };
-
-  if (categoryId) {
-    options.categoryId = categoryId.trim();
-  }
-
-  if (subCategoryId) {
-    options.subCategoryId = subCategoryId.trim();
-  }
 
   if (page !== undefined && limit !== undefined) {
     const parsedPage = parseInt(page, 10);
     const parsedLimit = parseInt(limit, 10);
 
-    if (
-      isNaN(parsedPage) ||
-      isNaN(parsedLimit) ||
-      parsedPage <= 0 ||
-      parsedLimit <= 0
-    ) {
+    if (isNaN(parsedPage) || isNaN(parsedLimit) || parsedPage <= 0 || parsedLimit <= 0) {
       return sendErrorResponse({
         res,
         statusCode: 400,
-        message:
-          "Invalid pagination parameters. 'page' and 'limit' must be positive numbers.",
+        message: "Invalid pagination parameters. 'page' and 'limit' must be positive numbers.",
       });
     }
 
@@ -133,7 +104,9 @@ export const getAllItems = tryCatch(async (req, res) => {
   });
 });
 
-
+/**
+ * Get a single item by ID
+ */
 export const getItemById = tryCatch(async (req, res) => {
   const { id } = req.params;
   const item = await getItemByIdService(id);
@@ -146,102 +119,11 @@ export const getItemById = tryCatch(async (req, res) => {
   });
 });
 
-export const getAssignedItems = tryCatch(async (req, res) => {
-  const userSocialId = req.user.socialId;
-  const { page, limit, search = "", categoryId = "", subCategoryId = "" } = req.query;
-
-  const options = { search: search.trim() };
-
-  if (categoryId) {
-    options.categoryId = categoryId.trim();
-  }
-
-  if (subCategoryId) {
-    options.subCategoryId = subCategoryId.trim();
-  }
-
-  if (page !== undefined && limit !== undefined) {
-    const parsedPage = parseInt(page, 10);
-    const parsedLimit = parseInt(limit, 10);
-
-    if (
-      isNaN(parsedPage) ||
-      isNaN(parsedLimit) ||
-      parsedPage <= 0 ||
-      parsedLimit <= 0
-    ) {
-      return sendErrorResponse({
-        res,
-        statusCode: 400,
-        message:
-          "Invalid pagination parameters. 'page' and 'limit' must be positive numbers.",
-      });
-    }
-
-    options.page = parsedPage;
-    options.limit = parsedLimit;
-  }
-
-  const result = await getAssignedItemsService(userSocialId, options);
-
-  return sendResponse({
-    res,
-    statusCode: 200,
-    message: "Fetched your items",
-    data: result.data,
-    meta: result.meta,
-  });
-});
 
 
-export const getUserCreatedItemsController = tryCatch(async (req, res) => {
-  const userSocialId = req.user.socialId;
-  const { page, limit, search = "", categoryId = "", subCategoryId = "" } = req.query;
-
-  const options = { search: search.trim() };
-
-  if (categoryId) {
-    options.categoryId = categoryId.trim();
-  }
-
-  if (subCategoryId) {
-    options.subCategoryId = subCategoryId.trim();
-  }
-
-  if (page !== undefined && limit !== undefined) {
-    const parsedPage = parseInt(page, 10);
-    const parsedLimit = parseInt(limit, 10);
-
-    if (
-      isNaN(parsedPage) ||
-      isNaN(parsedLimit) ||
-      parsedPage <= 0 ||
-      parsedLimit <= 0
-    ) {
-      return sendErrorResponse({
-        res,
-        statusCode: 400,
-        message:
-          "Invalid pagination parameters. 'page' and 'limit' must be positive numbers.",
-      });
-    }
-
-    options.page = parsedPage;
-    options.limit = parsedLimit;
-  }
-
-  const result = await getUserCreatedItemsService(userSocialId, options);
-
-  return sendResponse({
-    res,
-    statusCode: 200,
-    message: "Fetched items created by you",
-    data: result.data,
-    meta: result.meta,
-  });
-});
-
-
+/**
+ * Delete an item
+ */
 export const deleteItem = tryCatch(async (req, res) => {
   const { id } = req.params;
 
@@ -263,6 +145,9 @@ export const deleteItem = tryCatch(async (req, res) => {
   });
 });
 
+/**
+ * Bulk upload items via CSV
+ */
 export const uploadItemsBulk = tryCatch(async (req, res) => {
   if (!req.file) {
     return sendErrorResponse({
@@ -272,7 +157,7 @@ export const uploadItemsBulk = tryCatch(async (req, res) => {
     });
   }
 
-  const filePath = req.file.path; 
+  const filePath = req.file.path;
   const results = await ItemBulkService.processCSV(filePath);
 
   return sendResponse({
