@@ -76,38 +76,48 @@ export const updateRoleService = async (id, updates) => {
 export const listRolesService = async ({ page, limit, search = "" }) => {
   const { data, total } = await getAllRoles({ search }, { page, limit });
 
-  // Find admin role
-  const adminRole = data.find((role) => role.name.toLowerCase() === "admin");
+  const adminRole = data.find(
+    (role) => role.name.toLowerCase() === "admin"
+  );
 
   if (adminRole) {
     const allModules = await Module.find({});
-
     const allPermissions = await Permission.find({});
-    const actions = allPermissions.map(p => p.action);
-    
+    const actions = allPermissions.map((p) => p.action);
 
     adminRole.modules = allModules.map((mod) => ({
       module: mod,
-      permissions: actions, 
+      permissions: actions,
     }));
   }
 
+  const filteredData = data.filter(
+    (role) => role.name.toLowerCase() !== "admin"
+  );
+
+  const filteredTotal = filteredData.length;
+
   return {
-    data,
+    data: filteredData,
     meta: {
-      total,
+      total: filteredTotal,
       page: page || null,
       limit: limit || null,
-      totalPages: page || limit ? Math.ceil(total / (limit || 10)) : 1,
+      totalPages:
+        page || limit
+          ? Math.ceil(filteredTotal / (limit || 10))
+          : 1,
     },
   };
 };
+
 
 /**
  * Get Role by ID
  */
 export const getRoleByIdService = async (roleId) => {
   const role = await findRoleById(roleId);
+  
   if (!role) {
     throw new Error("Role not found.");
   }

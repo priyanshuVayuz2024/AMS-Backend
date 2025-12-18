@@ -8,6 +8,9 @@ import {
 } from "../services/userServices.js";
 import { getEntitiesFromEntityAdminMappingServiceBySocialIdAndEntityId } from "../services/entityAdminMappingService.js";
 import mongoose from "mongoose";
+import { findRoleById } from "../repositories/roleRepo.js";
+import Role from "../models/RoleModel.js";
+import UserRole from "../models/UserRoleModel.js";
 
 const PROFILE_BACKEND_URL = "https://profilebackend.vayuz.com/users/api/signin";
 const JWT_SECRET = process.env.JWT_SECRET || "supersecretkey";
@@ -62,9 +65,32 @@ export const login = async (req, res) => {
       await user.save();
     }
 
-    
-    const userRoles = await getUserRoleFromUserRolesService(user.socialId);
-    console.log(userRoles, "userRoles");
+    let userRoles = await getUserRoleFromUserRolesService(user.socialId);
+    //  If no role assigned → assign default "User" role
+    if (!userRoles || userRoles.length === 0) {
+      const defaultUserRole = await Role.findOne({
+        name: "User",
+        isActive: true,
+      });
+
+      if (defaultUserRole) {
+        // prevent duplicates
+        const exists = await UserRole.findOne({
+          socialId: user.socialId,
+          roleId: defaultUserRole._id,
+        });
+
+        if (!exists) {
+          await UserRole.create({
+            assignedToSocialId: user.socialId, 
+            roleId: defaultUserRole._id,
+          });
+        }
+
+        // re-fetch roles so rest of code works unchanged
+        userRoles = await getUserRoleFromUserRolesService(user.socialId);
+      }
+    }
 
     // Group userRoles by roleId
     const roleMap = new Map();
@@ -111,16 +137,13 @@ export const login = async (req, res) => {
     for (const [roleId, roleObj] of roleMap.entries()) {
       const permissions = await getPermissionsByRoleIdService(roleId);
       roleObj.permissions = permissions.map((p) => p.permission.name);
-      
     }
 
-    const roles = Array.from(roleMap.values());
+    const roles = roleMap.values().next().value || null;
 
-    console.log(roles, "roles");
+    const role = await findRoleById(roles?.roleId);
 
-    const isadmin = roles.some(
-      (r) => r.role && r.role.toLowerCase() === "admin"
-    );
+    const isadmin = roles?.role?.toLowerCase() === "admin" ? true : false;
 
     const token = jwt.sign(
       { id: user?._id, socialId: user.socialId },
@@ -141,7 +164,7 @@ export const login = async (req, res) => {
           socialId: user.socialId,
           department: user.department,
         },
-        roles,
+        role,
         isadmin,
       },
     });

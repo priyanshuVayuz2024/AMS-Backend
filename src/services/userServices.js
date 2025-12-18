@@ -1,3 +1,4 @@
+import User from "../models/UserModel.js";
 import UserRole from "../models/UserRoleModel.js";
 import { getPermissionsByRoleIdRepo } from "../repositories/rolePermissionRepo.js";
 import {
@@ -12,67 +13,81 @@ export const findUserById = async (id) => {
 };
 
 export const getUserRoleFromUserRolesService = async (socialId) => {
+  
   return await UserRole.find({
     assignedToSocialId: socialId,
-  })
-  .populate({
+  }).populate({
     path: "roleId",
-    select: "name"   
+    select: "name",
   });
 };
-
-
-
-
 
 export const getPermissionsByRoleIdService = async (id) => {
   return await getPermissionsByRoleIdRepo(id);
 };
 
-
 export const getAllUsersService = async ({ page, limit, search = "" }) => {
-    const filter = {};
+  const filter = {};
 
-    if (search) {
-        filter.name = { $regex: search, $options: "i" }; 
-    }
+  if (search) {
+    filter.name = { $regex: search, $options: "i" };
+  }
 
-    const options = {};
-    if (page !== undefined && limit !== undefined) {
-        options.page = page;
-        options.limit = limit;
-    }
+  const options = {};
+  if (page !== undefined && limit !== undefined) {
+    options.page = page;
+    options.limit = limit;
+  }
 
-    const { data, total } = await getAllUsers(filter, options);
+  const { data, total } = await getAllUsers(filter, options);
 
-    const meta = { total };
-    if (page !== undefined && limit !== undefined) {
-        meta.page = page;
-        meta.limit = limit;
-        meta.totalPages = Math.ceil(total / limit);
-    }
+  const meta = { total };
+  if (page !== undefined && limit !== undefined) {
+    meta.page = page;
+    meta.limit = limit;
+    meta.totalPages = Math.ceil(total / limit);
+  }
 
-    return {
-        data,
-        meta,
-    };
+  return {
+    data,
+    meta,
+  };
 };
 
- export const updateUserService = async (id, updates) => {
-   const user = await findUserById(id);
-   if (!user) throw new Error("User not found.");
- 
-   const updatePayload = {};
- 
-   if (updates.userId) updatePayload.userId = updates.userId.trim(); 
-   if (typeof updates.isActive === "boolean") {
-     updatePayload.isActive = updates.isActive;
-   }
- 
-   const updatedUser = await updateUserById(id, updatePayload);
- 
-   return {
-     updatedUser,
-     message: "User updated successfully.",
-   };
- };
+export const updateUserService = async (id, updates) => {
+  const user = await findUserById(id);
+  if (!user) throw new Error("User not found.");
+
+  const updatePayload = {};
+
+  if (updates.userId) updatePayload.userId = updates.userId.trim();
+  if (typeof updates.isActive === "boolean") {
+    updatePayload.isActive = updates.isActive;
+  }
+
+  const updatedUser = await updateUserById(id, updatePayload);
+
+  return {
+    updatedUser,
+    message: "User updated successfully.",
+  };
+};
+
+export const getUsersWithoutRoles = async () => {
+  try {
+    const usersWithRoles = await UserRole.find({}, "assignedToSocialId");
+    const assignedSocialIds = usersWithRoles.map((u) => u.assignedToSocialId);
+
+    // Find users whose socialId is NOT in the assignedSocialIds
+    const usersWithoutRoles = await User.find({
+      socialId: { $nin: assignedSocialIds },
+    });
+
+    return {
+      data: usersWithoutRoles,
+    };
+  } catch (error) {
+    console.error("Error fetching users without roles:", error);
+    throw error;
+  }
+};

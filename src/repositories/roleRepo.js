@@ -11,9 +11,16 @@ export const createRole = async (roleData) => {
  * Find Role by ID
  */
 export const findRoleById = async (id) => {
-  return await Role.findById(id)
+  const role = await Role.findById(id)
     .populate("modules.module")
     .populate("modules.permissions");
+
+  console.log(
+    "findRoleById result:",
+    JSON.stringify(role, null, 2)
+  );
+
+  return role;
 };
 
 /**
@@ -53,8 +60,10 @@ export const getAllRoles = async (
   let query = Role.find(queryObj)
     .sort({ createdAt: -1 })
     .populate("modules.module")
+    .populate("modules.module.name")
     .populate("modules.permissions");
 
+    
   if (page || limit) {
     const pageNumber = Number(page) > 0 ? Number(page) : 1;
     const pageSize = Number(limit) > 0 ? Number(limit) : 10;

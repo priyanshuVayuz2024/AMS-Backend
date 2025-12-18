@@ -1,4 +1,4 @@
-import { findUserById, getAllUsersService, updateUserService } from "../services/userServices.js";
+import { findUserById, getAllUsersService, getUsersWithoutRoles, updateUserService } from "../services/userServices.js";
 
 import {
   sendResponse,
@@ -83,3 +83,21 @@ export const updateUser = tryCatch(async (req, res) => {
     },
   });
 });
+
+
+export const fetchUsersWithoutRoles = async (req, res) => {
+  try {
+    const users = await getUsersWithoutRoles();
+    
+    return sendResponse({
+    res,
+    statusCode: 200,
+    message: "Items fetched successfully",
+    data: users.data,
+  });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+

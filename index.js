@@ -17,6 +17,7 @@ import approvalRoutes from "./src/routes/approvalRoutes.js";
 import moduleRoutes from "./src/routes/moduleRoutes.js";
 import roleRoutes from "./src/routes/roleRoutes.js";
 import roleAssignRoutes from "./src/routes/roleAssignRoutes.js";
+import assetAssignmentRoutes from "./src/routes/assetAssignmentRoutes.js";
 
 import { errorHandler } from "./src/util/responseHandler.js";
 const PORT = process.env.PORT || 5000;
@@ -42,6 +43,7 @@ app.use("/api/approval", approvalRoutes);
 app.use("/api/module", moduleRoutes);
 app.use("/api/role", roleRoutes);
 app.use("/api/role-assignee", roleAssignRoutes);
+app.use("/api/asset-assignment", assetAssignmentRoutes);
 
 
 app.use(errorHandler);

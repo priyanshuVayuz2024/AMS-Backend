@@ -1,6 +1,6 @@
 import express from "express";
 
-import { getAllUsers, getUserById, updateUser } from "../controllers/userController.js";
+import { getAllUsers, getUserById, updateUser, fetchUsersWithoutRoles } from "../controllers/userController.js";
 
 import { authenticate } from "../middlewares/AuthMiddleware.js";
 import { updateUserStatusSchema } from "../validationSchema/userValidationSchema.js";
@@ -8,6 +8,7 @@ import { validateRequestData } from "../middlewares/validateRequestData.js";
 const router = express.Router();
 
 router.get("/", authenticate, getAllUsers);
+router.get("/nr", authenticate, fetchUsersWithoutRoles);
 
 router.get(
   "/:id",

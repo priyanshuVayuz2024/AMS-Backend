@@ -136,29 +136,34 @@ export const listRoleAssigneesService = async ({
     { page, limit }
   );
 
-  const enrichedData = [];
+  const filteredData = data.filter((item) => {
+    if (!item.roles || !Array.isArray(item.roles)) return true;
 
-  for (const item of data) {
-    const role = await findRoleById(item.roleId);
-    const user = await User.findOne({ socialId: item.assignedToSocialId });
+    return !item.roles.some(
+      (role) => role.name?.toLowerCase() === "admin"
+    );
+  });
 
-    enrichedData.push({
-      ...item.toObject?.(),
-      roleName: role?.name || null,
-      userName: user?.name || null,
-    });
-  }
+  const filteredTotal = filteredData.length;
 
   return {
-    data: enrichedData,
+    data: filteredData.map((item) => ({
+      ...item,
+      roleName: item.roleName || null,
+      userName: item.userName || null,
+    })),
     meta: {
-      total,
+      total: filteredTotal,
       page: page || null,
       limit: limit || null,
-      totalPages: page || limit ? Math.ceil(total / (limit || 10)) : 1,
+      totalPages:
+        page || limit
+          ? Math.ceil(filteredTotal / (limit || 10))
+          : 1,
     },
   };
 };
+
 
 /**
  * Delete Role Assignee
