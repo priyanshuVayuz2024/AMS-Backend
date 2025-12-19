@@ -1,3 +1,4 @@
+import Item from "../models/ItemModel.js";
 import {
   createAssetAssignment,
   findAssetAssignmentById,
@@ -28,8 +29,17 @@ export const createAssetAssignmentService = async (data) => {
     status: data.status || "assigned",
   });
 
+  if (assignment.status === "assigned") {
+    await Item.findByIdAndUpdate(
+      data.entityId,
+      { allocationStatus: "allocated" },
+      { new: false }
+    );
+  }
+
   return { assignment };
 };
+
 
 /**
  * Update an asset assignment (e.g., mark as returned)
@@ -59,14 +69,20 @@ export const updateAssetAssignmentService = async (id, updates) => {
 /**
  * List all asset assignments with optional search & pagination
  */
-export const listAssetAssignmentsService = async ({ page, limit, search = "" }) => {
+export const listAssetAssignmentsService = async ({
+  page,
+  limit,
+  search = "",
+  user,
+  isStrictReadOnly,
+}) => {
   const filter = {};
 
-  if (search) {
-    filter.userSocialId = { $regex: search, $options: "i" };
+  if (isStrictReadOnly) {
+    filter.userSocialId = user.socialId; 
   }
 
-  const { data, total } = await getAllAssetAssignments(filter, { page, limit });
+  const { data, total } = await getAllAssetAssignments(filter, { page, limit, search });
 
   return {
     data,
@@ -78,6 +94,8 @@ export const listAssetAssignmentsService = async ({ page, limit, search = "" }) 
     },
   };
 };
+
+
 
 
 export const getAssetAssignmentByIdService = async (itemId) => {

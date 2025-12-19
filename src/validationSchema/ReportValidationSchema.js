@@ -1,27 +1,39 @@
 import Joi from "joi";
 
-export const createReportValidation = Joi.object({
-  reportedAssetId: Joi.string()
-    .pattern(/^[0-9a-fA-F]{24}$/)
-    .required(),
 
-  title: Joi.string().trim().min(3).max(100).required(),
+const reportValidationSchema = Joi.object({
+  assetId: Joi.string().trim().required().messages({
+    "string.empty": "Asset ID is required",
+    "any.required": "Asset ID is a required field",
+  }),
 
-  issue: Joi.string().trim().max(500).allow(""),
-});
+  reportTitle: Joi.string().trim().required().messages({
+    "string.empty": "Report title is required",
+    "any.required": "Report title is a required field",
+  }),
 
-export const updateReportValidation = Joi.object({
-  title: Joi.string().trim().min(3).max(100).optional(),
-  issue: Joi.string().trim().max(500).optional(),
-});
+  reportDescription: Joi.string().trim().allow("").messages({
+    "string.base": "Report description must be a string",
+  }),
 
+  reportedBy: Joi.any(),
 
-export const updateReportStatusValidation = Joi.object({
   status: Joi.string()
     .valid("open", "in-progress", "resolved", "closed")
-    .required()
+    .default("open")
     .messages({
-      "any.only": "Status must be one of 'open', 'in-progress', 'resolved', or 'closed'.",
-      "string.empty": "Status is required.",
+      "any.only": "Invalid report status",
     }),
 });
+
+
+const reportStatusValidationSchema = Joi.object({
+  status: Joi.string()
+    .valid("open", "in-progress", "resolved", "closed")
+    .default("open")
+    .messages({
+      "any.only": "Invalid report status",
+    }),
+});
+
+export { reportValidationSchema, reportStatusValidationSchema };

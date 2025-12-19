@@ -59,31 +59,26 @@ export const updateAssetAssignment = tryCatch(async (req, res) => {
 export const getAllAssetAssignments = tryCatch(async (req, res) => {
   const { page, limit, search = "" } = req.query;
 
-  const options = {
-    search: search.trim(),
-  };
+  // Parse pagination
+  const parsedPage = page ? parseInt(page, 10) : 1;
+  const parsedLimit = limit ? parseInt(limit, 10) : 10;
 
-  if (page !== undefined && limit !== undefined) {
-    const parsedPage = parseInt(page, 10);
-    const parsedLimit = parseInt(limit, 10);
-
-    if (
-      isNaN(parsedPage) ||
-      isNaN(parsedLimit) ||
-      parsedPage <= 0 ||
-      parsedLimit <= 0
-    ) {
-      return sendErrorResponse({
-        res,
-        statusCode: 400,
-        message:
-          "Invalid pagination parameters. 'page' and 'limit' must be positive numbers.",
-      });
-    }
-
-    options.page = parsedPage;
-    options.limit = parsedLimit;
+  if (isNaN(parsedPage) || isNaN(parsedLimit) || parsedPage <= 0 || parsedLimit <= 0) {
+    return sendErrorResponse({
+      res,
+      statusCode: 400,
+      message: "Invalid pagination parameters. 'page' and 'limit' must be positive numbers.",
+    });
   }
+
+  // ✅ Pass user and read-only flag to service
+  const options = {
+    page: parsedPage,
+    limit: parsedLimit,
+    search: search.trim(),
+    user: req.user,                        // 👈 pass logged-in user
+    isStrictReadOnly: req.isStrictReadOnly || false, // 👈 pass read-only flag
+  };
 
   const result = await listAssetAssignmentsService(options);
 
@@ -96,11 +91,13 @@ export const getAllAssetAssignments = tryCatch(async (req, res) => {
   });
 });
 
+
 /**
  * Get a single asset by ID
  */
 export const getAssetAssignmentById = tryCatch(async (req, res) => {
   const { id } = req.params;
+  
   const asset = await getAssetAssignmentByIdService(id);
 
   return sendResponse({

@@ -2,13 +2,11 @@ import mongoose from "mongoose";
 
 const reportSchema = new mongoose.Schema(
   {
-
-    assetID: {
+    assetId: {
       type: String,
       required: true,
-      trim: true
+      trim: true,
     },
-
 
     reportTitle: {
       type: String,
@@ -22,24 +20,28 @@ const reportSchema = new mongoose.Schema(
       default: "",
     },
 
-      reportedBy: {
+    reportedBy: {
       type: String,
       required: true,
-      trim: true
+      trim: true,
     },
 
-    reportCount: {
-      type: Number,
-      required: true,
-      default: 1,
+    images: {
+      type: [String], 
+      default: [],    
     },
+
+    videos: {
+      type: [String], 
+      default: [],    
+    },
+
 
     status: {
       type: String,
       enum: ["open", "in-progress", "resolved", "closed"],
       default: "open",
     },
-
   },
   { timestamps: true }
 );

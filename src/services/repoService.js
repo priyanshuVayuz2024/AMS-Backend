@@ -1,78 +1,81 @@
 import {
-  addAdminMapping,
-  addMultiAdminMappings,
-  removeAdminMappings,
-  getAdminsForEntity,
-} from "../repositories/entityAdminRepo.js";
-
-
-import {
   createReport,
   deleteReportById,
   findReportById,
   getAllReportsRepo,
   getMyReportsRepo,
+  updateReportById,
 } from "../repositories/reportRepo.js";
 
-
-import ReportModel from "../models/ReportModel.js";
 import { findItemById } from "../repositories/itemRepo.js";
 
-const ENTITY_TYPE = "Report";
-
-
-export const createReportService = async (data, reporterSocialId) => {
-    
-  if (!reporterSocialId?.trim()) {
-    throw new Error("Reporter socialId is required.");
+/**
+ * Create Report
+ */
+export const createReportService = async (data, reportedBy) => {
+ 
+  
+  if (!reportedBy?.trim()) {
+    throw new Error("Reported by is required.");
   }
 
-  if (!data?.reportedAssetId) {
+  if (!data?.assetId) {
     throw new Error("Asset ID is required.");
   }
 
-  if (!data?.title?.trim()) {
+  if (!data?.reportTitle?.trim()) {
     throw new Error("Report title is required.");
   }
 
-  // Create report
   const report = await createReport({
-    reportedBySocialId: reporterSocialId.trim(), 
-    reportedAssetId: data.reportedAssetId,
-    title: data.title.trim(),
-    issue: data?.issue?.trim() || "",
-    status: "open", 
+    assetId: data.assetId,
+    reportTitle: data.reportTitle.trim(),
+    reportDescription: data.reportDescription?.trim() || "",
+    reportedBy: reportedBy.trim(),
+    images: data?.image || [],
+    videos: data?.video || [],
+    status: "open",
   });
 
-  
-  // Fetch asset info using existing findItemById (includes category/subcategory)
-  const asset = await findItemById(data.reportedAssetId);
-  
+  const asset = await findItemById(data.assetId);
 
   return {
     ...report.toObject(),
+    assetId: asset?._id || null,
     assetName: asset?.name || null,
-    categoryName: asset?.categoryName || null,
-    subCategoryName: asset?.subCategoryName || null,
-    categoryId: asset?.categoryId || null,
-    subCategoryId: asset?.subCategoryId || null,
   };
 };
 
-
+/**
+ * Update Report
+ */
 export const updateReportService = async (id, updates) => {
-  const report = await ReportModel.findById(id);
+  const report = await findReportById(id);
   if (!report) throw new Error("Report not found.");
 
   const updatePayload = {};
 
-  if (updates.title?.trim()) {
-    updatePayload.title = updates.title.trim();
+  if (updates.reportTitle?.trim()) {
+    updatePayload.reportTitle = updates.reportTitle.trim();
   }
 
-  if (typeof updates.issue === "string") {
-    updatePayload.issue = updates.issue.trim();
+  if (updates.assetId?.trim()) {
+    updatePayload.assetId = updates.assetId.trim();
   }
+
+  if (typeof updates.reportDescription === "string") {
+    updatePayload.reportDescription = updates.reportDescription.trim();
+  }
+
+  if (updates.image !== undefined) {
+  updatePayload.images = updates.image;
+}
+
+if (updates.video !== undefined) {
+  updatePayload.videos = updates.video; 
+}
+
+ console.log(updatePayload, "updatePayload");
 
   if (updates.status) {
     const allowedStatuses = ["open", "in-progress", "resolved", "closed"];
@@ -82,44 +85,30 @@ export const updateReportService = async (id, updates) => {
     updatePayload.status = updates.status;
   }
 
-  const updatedReport = await ReportModel.findByIdAndUpdate(id, updatePayload, {
-    new: true,
-  }).lean();
+  const updatedReport = await updateReportById(id, updatePayload);
 
-  console.log(updatedReport,"updatedReport");
-  
-
-  // Fetch asset info using findItemById (includes category/subcategory)
-  const asset = await findItemById(updatedReport.reportedAssetId);
+  const asset = await findItemById(updatedReport.assetId);
 
   return {
     ...updatedReport,
     assetId: asset?._id || null,
     assetName: asset?.name || null,
-    categoryName: asset?.categoryName || null,
-    subCategoryName: asset?.subCategoryName || null,
-    categoryId: asset?.categoryId || null,
-    subCategoryId: asset?.subCategoryId || null,
   };
 };
 
-
+/**
+ * List All Reports
+ */
 export const listReportsService = async ({ page = 1, limit = 10, filter = {} } = {}) => {
   const { reports, total } = await getAllReportsRepo(filter, { page, limit });
 
-  // Attach asset info (name + category/subcategory)
   const updatedReports = await Promise.all(
     reports.map(async (report) => {
-      const asset = await findItemById(report.reportedAssetId);
-
+      const asset = await findItemById(report.assetId);
       return {
         ...report,
         assetId: asset?._id || null,
         assetName: asset?.name || null,
-        categoryName: asset?.categoryName || null,
-        subCategoryName: asset?.subCategoryName || null,
-        categoryId: asset?.categoryId || null,
-        subCategoryId: asset?.subCategoryId || null,
       };
     })
   );
@@ -137,39 +126,43 @@ export const listReportsService = async ({ page = 1, limit = 10, filter = {} } =
 
 
 
+/**
+ * Find Report By ID
+ */
 export const findReportByIdService = async (id) => {
   const report = await findReportById(id);
   if (!report) return null;
 
-  const asset = await findItemById(report.reportedAssetId);
+  const asset = await findItemById(report.assetId);
 
   return {
     ...report,
     assetId: asset?._id || null,
     assetName: asset?.name || null,
-    categoryName: asset?.categoryName || null,
-    subCategoryName: asset?.subCategoryName || null,
-    categoryId: asset?.categoryId || null,
-    subCategoryId: asset?.subCategoryId || null,
   };
-}
+};
 
-
-export const getMyReportsService = async (userSocialId, { page = 1, limit = 10, filter = {} } = {}) => {
-  const { reports, total } = await getMyReportsRepo(userSocialId, filter, { page, limit });
+/**
+ * Get My Reports
+ */
+export const getMyReportsService = async (
+  reportedBy,
+  { page = 1, limit = 10, filter = {} } = {}
+) => {
+  const { reports, total } = await getMyReportsRepo(
+    reportedBy,
+    filter,
+    { page, limit }
+  );
 
   const updatedReports = await Promise.all(
     reports.map(async (report) => {
-      const asset = await findItemById(report.reportedAssetId);
+      const asset = await findItemById(report.assetId);
 
       return {
         ...report,
         assetId: asset?._id || null,
         assetName: asset?.name || null,
-        categoryName: asset?.categoryName || null,
-        subCategoryName: asset?.subCategoryName || null,
-        categoryId: asset?.categoryId || null,
-        subCategoryId: asset?.subCategoryId || null,
       };
     })
   );
@@ -185,6 +178,9 @@ export const getMyReportsService = async (userSocialId, { page = 1, limit = 10, 
   };
 };
 
+/**
+ * Delete Report
+ */
 export const deleteReportService = async (id) => {
   const deletedReport = await deleteReportById(id);
 

@@ -9,6 +9,7 @@ import {
   findItemById,
   findItemByName,
   getAllItems,
+  getAssetsFromDB,
   updateItemById,
 } from "../repositories/itemRepo.js";
 
@@ -22,11 +23,38 @@ export const createItemService = async (data) => {
   const existing = await findItemByName(trimmedName);
   if (existing) throw new Error("Item name already exists.");
 
+  // Upload image/video if provided
+  const image = [];
+  const video = [];
+
+  if (data.image?.length) {
+    for (const file of data.image) {
+      const url = await cloudinary.uploader.upload(file.buffer || file, {
+        folder: "items/image",
+      });
+      image.push(url.secure_url);
+    }
+  }
+
+  if (data.video?.length) {
+    for (const file of data.video) {
+      const url = await cloudinary.uploader.upload(file.buffer || file, {
+        folder: "items/video",
+        resource_type: "video",
+      });
+      video.push(url.secure_url);
+    }
+  }
+
+
+
   const item = await createItem({
     name: trimmedName,
     description: data?.description?.trim(),
     createdBy: data?.createdBy,
     isActive: typeof data.isActive === "boolean" ? data.isActive : true,
+    images: image,
+    videos: video,
   });
 
   return { item };
@@ -48,10 +76,39 @@ export const updateItemService = async (id, updates) => {
   const updatePayload = {
     name: newName || item.name,
     description: updates.description?.trim() || item.description,
-    isActive: typeof updates.isActive === "boolean" ? updates.isActive : item.isActive,
+    isActive:
+      typeof updates.isActive === "boolean" ? updates.isActive : item.isActive,
   };
 
+  const image = item?.image || [];
+  const video = item?.video || [];
+
+  if (updates.image?.length) {
+    for (const file of updates.image) {
+      const url = await cloudinary.uploader.upload(file.buffer || file, {
+        folder: "items/image",
+      });
+      image.push(url.secure_url);
+    }
+  }
+
+  if (updates.video?.length) {
+    for (const file of updates.video) {
+      const url = await cloudinary.uploader.upload(file.buffer || file, {
+        folder: "items/video",
+        resource_type: "video",
+      });
+      video.push(url.secure_url);
+    }
+  }
+
+  updatePayload.images = image;
+  updatePayload.videos = video;
+
+    console.log(updatePayload,"updatePayload");
   const updatedItem = await updateItemById(id, updatePayload);
+  console.log(updatedItem,"updatedItem");
+  
   return { updatedItem };
 };
 
@@ -75,6 +132,30 @@ export const listItemsService = async ({ page, limit, search = "" }) => {
   };
 };
 
+export const listUnallocatedAssetsService = async ({
+  page,
+  limit,
+  search = "",
+}) => {
+  const filter = { allocationStatus: "unallocated" };
+
+  if (search) {
+    filter.name = { $regex: search, $options: "i" };
+  }
+
+  const { data, total } = await getAssetsFromDB(filter, { page, limit });
+
+  return {
+    data,
+    meta: {
+      total,
+      page: page || 1,
+      limit: limit || total,
+      totalPages: page && limit ? Math.ceil(total / limit) : 1,
+    },
+  };
+};
+
 /**
  * Get a single item by ID
  */
@@ -83,7 +164,6 @@ export const getItemByIdService = async (itemId) => {
   if (!item) throw new Error("Item not found.");
   return item;
 };
-
 
 /**
  * Delete an item
@@ -131,7 +211,8 @@ export const ItemBulkService = {
           convert: true,
         });
 
-        if (error) throw new Error(error.details.map((d) => d.message).join(", "));
+        if (error)
+          throw new Error(error.details.map((d) => d.message).join(", "));
 
         // Create item
         const { item } = await createItemService(value);

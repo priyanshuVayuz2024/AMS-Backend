@@ -20,6 +20,16 @@ const itemSchema = new mongoose.Schema(
       default: 0,
     },
 
+    images: {
+      type: [String], 
+      default: [],    
+    },
+
+    videos: {
+      type: [String], 
+      default: [],    
+    },
+
     allocationStatus: {
       type: String,
       enum: ["unallocated", "allocated", "in-use", "under-maintenance"],

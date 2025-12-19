@@ -1,47 +1,67 @@
 import express from "express";
 import {
-  getMyReportsController,
   updateReportController,
   deleteReportController,
   createReportController,
   getAllReportsController,
-  getReportByIdController
+  getReportByIdController,
 } from "../controllers/reportController.js";
 
+import { uploadFiles } from "../middlewares/uploadFiles.js";
 import { authenticate } from "../middlewares/AuthMiddleware.js";
 import { validateRequestData } from "../middlewares/validateRequestData.js";
 import {
-  updateReportStatusValidation,
-  createReportValidation,
-  updateReportValidation,
+  reportValidationSchema,
+  reportStatusValidationSchema,
 } from "../validationSchema/ReportValidationSchema.js";
+import { checkModulePermission } from "../middlewares/ModulePermissionCheckMiddleware.js";
+
 const router = express.Router();
 
 router.post(
   "/",
   authenticate,
-  validateRequestData(createReportValidation),
-  createReportController 
+  uploadFiles,
+  checkModulePermission("Report", "create"),
+  validateRequestData(reportValidationSchema),
+  createReportController
 );
 
-router.get("/", authenticate, getAllReportsController);
-router.get("/my", authenticate, getMyReportsController);
+router.get(
+  "/",
+  authenticate,
+  checkModulePermission("Report", "read"),
+  getAllReportsController
+);
 
-router.get("/:id", authenticate, getReportByIdController);
+router.get(
+  "/:id",
+  authenticate,
+  checkModulePermission("Report", "read"),
+  getReportByIdController
+);
 router.put(
   "/:id",
   authenticate,
-  validateRequestData(updateReportValidation),
+  uploadFiles,
+  checkModulePermission("Report", "update"),
+  validateRequestData(reportValidationSchema),
   updateReportController
 );
 
 router.put(
   "/status/:id",
   authenticate,
-  validateRequestData(updateReportStatusValidation),
+  checkModulePermission("Report", "update"),
+  validateRequestData(reportStatusValidationSchema),
   updateReportController
 );
 
-router.delete("/:id", authenticate, deleteReportController);
+router.delete(
+  "/:id",
+  authenticate,
+  checkModulePermission("Report", "delete"),
+  deleteReportController
+);
 
 export default router;

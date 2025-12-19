@@ -2,10 +2,10 @@ import mongoose from "mongoose";
 
 const entityAdminMappingSchema = new mongoose.Schema(
   {
-    entityId: {
+     entityId: {
       type: mongoose.Schema.Types.ObjectId,
       required: true,
-      refPath: "Asset", 
+      ref: "Item", 
     },
     userSocialId: {
       type: String,

@@ -1,4 +1,6 @@
 import EntityAdminMapping from "../models/EntityAdminMappingModel.js"; // rename model file later if you want
+import Item from "../models/ItemModel.js";
+import User from "../models/UserModel.js";
 
 /**
  * Create a new asset assignment
@@ -11,8 +13,41 @@ export const createAssetAssignment = async (data) => {
  * Find assignment by ID
  */
 export const findAssetAssignmentById = async (id) => {
-  return await EntityAdminMapping.findById(id).lean();
+  const data = await EntityAdminMapping
+    .findById(id)
+    .populate({
+      path: "entityId",
+      select: "name",
+    })
+    .lean();
+  console.log(data, "data23432");
+
+  const userDetails = await User.find({socialId:data?.userSocialId})
+  const assetDetails = await Item.findById(data?.entityId?._id)
+  if (!data) return null;
+
+  return {
+    _id: data._id,
+    userSocialId: data.userSocialId,
+    status: data.status,
+    createdAt: data.createdAt,
+    updatedAt: data.updatedAt,
+    userDetails,
+    assetDetails,
+    assetId: data.entityId?._id,
+    assetName: data.entityId?.name, 
+  };
 };
+
+export const getAllAssetAssignmentsForUser = async (socialId) => {
+  const assignments = await EntityAdminMapping.find({
+    userSocialId: socialId,
+    status: "assigned",
+  }).lean();
+
+  return assignments; 
+};
+
 
 /**
  * Update assignment by ID
@@ -33,19 +68,78 @@ export const findAssetAssignment = async ({ entityId, userSocialId }) => {
  */
 export const getAllAssetAssignments = async (
   filter = {},
-  { page, limit } = {}
+  { page, limit, search = "" } = {}
 ) => {
-  const query = EntityAdminMapping.find(filter).sort({ createdAt: -1 }).lean();
-  const total = await EntityAdminMapping.countDocuments(filter);
+  const pipeline = [];
 
-  if (page && limit) {
-    const skip = (Number(page) - 1) * Number(limit);
-    query.skip(skip).limit(Number(limit));
+  pipeline.push({ $match: filter });
+
+  pipeline.push({
+    $lookup: {
+      from: "items",
+      localField: "entityId",
+      foreignField: "_id",
+      as: "asset",
+    },
+  });
+  pipeline.push({ $unwind: "$asset" });
+
+  pipeline.push({
+    $lookup: {
+      from: "users", 
+      localField: "userSocialId",
+      foreignField: "socialId",
+      as: "user",
+    },
+  });
+  pipeline.push({ $unwind: "$user" }); 
+
+  if (search) {
+    pipeline.push({
+      $match: {
+        $or: [
+          { "asset.name": { $regex: search, $options: "i" } },
+          { "user.name": { $regex: search, $options: "i" } },
+        ],
+      },
+    });
   }
 
-  const data = await query;
+  pipeline.push({ $sort: { createdAt: -1 } });
+
+  if (page && limit) {
+    pipeline.push(
+      { $skip: (Number(page) - 1) * Number(limit) },
+      { $limit: Number(limit) }
+    );
+  }
+
+  pipeline.push({
+    $project: {
+      _id: 1,
+      userSocialId: 1,
+      userName: "$user.name", 
+      status: 1,
+      createdAt: 1,
+      assetId: "$asset._id",
+      assetName: "$asset.name",
+    },
+  });
+
+  const data = await EntityAdminMapping.aggregate(pipeline);
+
+  const countPipeline = pipeline.filter(stage => !stage.$skip && !stage.$limit);
+  const countResult = await EntityAdminMapping.aggregate([
+    ...countPipeline,
+    { $count: "total" },
+  ]);
+  const total = countResult[0]?.total || 0;
+
   return { data, total };
 };
+
+
+
 
 /**
  * Get assignments assigned to a specific user

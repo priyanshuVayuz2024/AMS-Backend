@@ -7,6 +7,7 @@ import {
   listItemsService,
   updateItemService,
   ItemBulkService,
+  listUnallocatedAssetsService,
 } from "../services/itemService.js";
 
 import {
@@ -14,6 +15,7 @@ import {
   sendErrorResponse,
   tryCatch,
 } from "../util/responseHandler.js";
+import { uploadToCloudinary } from "../middlewares/cloudinaryUploadMiddleware.js";
 
 /**
  * Create a new item (no assigned user)
@@ -22,13 +24,31 @@ export const createItem = tryCatch(async (req, res) => {
   const { name, description, isActive } = req.body;
   const createdBy = req.user.socialId;
 
-  const { item } = await createItemService({
+  // Handle uploaded image/video
+  const imageFiles = req.files?.image || [];
+  const videoFiles = req.files?.video || [];
+
+  
+
+  const imageUrls = await Promise.all(
+    imageFiles.map((file) => uploadToCloudinary(file.buffer, "items", "image"))
+  );
+
+  const videoUrls = await Promise.all(
+    videoFiles.map((file) => uploadToCloudinary(file.buffer, "items", "video"))
+  );
+    
+
+  const item = await createItemService({
     name,
     description,
     createdBy,
     isActive,
+    image: imageUrls,
+    video: videoUrls,
   });
 
+  // Generate QR code
   const qrUrl = `http://localhost:5000/report?itemId=${item._id}`;
   const qrBase64 = await QRCode.toDataURL(qrUrl);
 
@@ -48,6 +68,7 @@ export const createItem = tryCatch(async (req, res) => {
   });
 });
 
+
 /**
  * Update an item
  */
@@ -55,12 +76,28 @@ export const updateItem = tryCatch(async (req, res) => {
   const { id } = req.params;
   const { name, description, isActive } = req.body;
 
-  const { updatedItem: item } = await updateItemService(id, {
+  
+  const imageFiles = req.files?.image || [];
+  const videoFiles = req.files?.video || [];
+
+  const imageUrls = await Promise.all(
+    imageFiles.map((file) => uploadToCloudinary(file.buffer, "items", "image"))
+  );
+
+  const videoUrls = await Promise.all(
+    videoFiles.map((file) => uploadToCloudinary(file.buffer, "items", "video"))
+  );
+
+
+
+  const {updatedItem:item} = await updateItemService(id, {
     name,
     description,
     isActive,
+    image: imageUrls,
+    video: videoUrls,
   });
-
+  
   return sendResponse({
     res,
     statusCode: 200,
@@ -99,6 +136,34 @@ export const getAllItems = tryCatch(async (req, res) => {
     res,
     statusCode: 200,
     message: "Items fetched successfully",
+    data: result.data,
+    meta: result.meta,
+  });
+});
+
+
+export const getUnallocatedAssets = tryCatch(async (req, res) => {
+  const { page, limit, search = "" } = req.query;
+
+  const parsedPage = page ? parseInt(page, 10) : undefined;
+  const parsedLimit = limit ? parseInt(limit, 10) : undefined;
+
+  if ((page && isNaN(parsedPage)) || (limit && isNaN(parsedLimit)) || (parsedPage && parsedPage <= 0) || (parsedLimit && parsedLimit <= 0)) {
+    return sendErrorResponse({
+      res,
+      statusCode: 400,
+      message: "Invalid pagination parameters. 'page' and 'limit' must be positive numbers.",
+    });
+  }
+
+  const options = { page: parsedPage, limit: parsedLimit, search: search.trim() };
+
+  const result = await listUnallocatedAssetsService(options);
+
+  return sendResponse({
+    res,
+    statusCode: 200,
+    message: "Unallocated assets fetched successfully",
     data: result.data,
     meta: result.meta,
   });

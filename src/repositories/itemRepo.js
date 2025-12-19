@@ -52,6 +52,21 @@ export const getAllItems = async (filter = {}, { page, limit } = {}) => {
   return { data, total };
 };
 
+
+
+export const getAssetsFromDB = async (filter = {}, { page, limit } = {}) => {
+  const query = Item.find(filter).sort({ createdAt: -1 }).lean();
+  const total = await Item.countDocuments(filter);
+
+  if (page && limit) {
+    const skip = (page - 1) * limit;
+    query.skip(skip).limit(limit);
+  }
+
+  const data = await query;
+  return { data, total };
+};
+
 /**
  * Get items assigned to a specific user via EntityAdminMapping
  * Only one user can be assigned per item

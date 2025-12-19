@@ -1,4 +1,3 @@
-
 import {
   createReportService,
   deleteReportService,
@@ -7,33 +6,88 @@ import {
   listReportsService,
   updateReportService,
 } from "../services/repoService.js";
+import { uploadToCloudinary } from "../middlewares/cloudinaryUploadMiddleware.js";
 
 import {
   sendResponse,
   sendErrorResponse,
   tryCatch,
 } from "../util/responseHandler.js";
+import { getAllAssetAssignmentsForUser } from "../repositories/assetAssignmentRepo.js";
+import UserRole from "../models/UserRoleModel.js";
+import { findRoleById } from "../repositories/roleRepo.js";
+
+/**
+ * Create Report
+ */
+export const createReportController = tryCatch(async (req, res, next) => {
+  const reportedBy = req.user?.socialId;
+  console.log(req.files, "req filesss");
+
+  const imageFiles = req.files?.image || [];
+  const videoFiles = req.files?.video || [];
+
+  const imageUrls = await Promise.all(
+    imageFiles.map((file) =>
+      uploadToCloudinary(file.buffer, "reports", "image")
+    )
+  );
+
+  const videoUrls = await Promise.all(
+    videoFiles.map((file) =>
+      uploadToCloudinary(file.buffer, "reports", "video")
+    )
+  );
 
 
-export const createReportController = tryCatch(async (req, res) => {
-  const reporterSocialId = req.user?.socialId;
-console.log("Creating report for user:", reporterSocialId);
-
-  const result = await createReportService(req.body, reporterSocialId);
+  const report = await createReportService(
+    {
+      ...req.body,
+      image: imageUrls,
+      video: videoUrls,
+    },
+    reportedBy
+  );
 
   return res.status(201).json({
     success: true,
     message: "Report created successfully",
-    data: result,
+    data: report,
   });
 });
 
-
+/**
+ * Update Report
+ */
 export const updateReportController = tryCatch(async (req, res) => {
   const { id } = req.params;
-  const { title, issue, status } = req.body;
 
-  const updatedReport = await updateReportService(id, { title, issue, status });
+  const { reportTitle, reportDescription, status, assetId } = req.body;
+
+  const imageFiles = req.files?.image || [];
+  const videoFiles = req.files?.video || [];
+
+  const imageUrls = await Promise.all(
+    imageFiles.map((file) =>
+      uploadToCloudinary(file.buffer, "reports", "image")
+    )
+  );
+
+  const videoUrls = await Promise.all(
+    videoFiles.map((file) =>
+      uploadToCloudinary(file.buffer, "reports", "video")
+    )
+  );
+
+  
+  const updatedReport = await updateReportService(id, {
+    assetId,
+    reportTitle,
+    reportDescription,
+    status,
+    image: imageUrls,
+    video: videoUrls,
+  });
 
   return sendResponse({
     res,
@@ -43,13 +97,40 @@ export const updateReportController = tryCatch(async (req, res) => {
   });
 });
 
-
+/**
+ * Get All Reports
+ */
 export const getAllReportsController = tryCatch(async (req, res) => {
   const { page = 1, limit = 10, search = "" } = req.query;
 
-  const filter = {};
+  const assignedAssets = await getAllAssetAssignmentsForUser(req.user.socialId);
+  const assignedAssetIds = assignedAssets.map((a) => a.entityId.toString());
+
+  let filter = {};
+  const userRole = await UserRole.findOne({
+    assignedToSocialId: req.user.socialId,
+  }).populate("roleId");
+  console.log(userRole, "userRoleuuugyhjwd");
+
+  // Check if user is admin
+  const isAdmin = userRole.roleId.name === "admin";
+  console.log(isAdmin, "iadmin234567");
+
+  if (!isAdmin) {
+    const assignedAssets = await getAllAssetAssignmentsForUser(
+      req.user.socialId
+    );
+    const assignedAssetIds = assignedAssets.map((a) => a.entityId.toString());
+
+    filter.assetId = { $in: assignedAssetIds };
+  }
+
   if (search.trim()) {
-    filter.title = { $regex: search.trim(), $options: "i" };
+    filter.reportTitle = { $regex: search.trim(), $options: "i" };
+  }
+
+  if (search.trim()) {
+    filter.reportTitle = { $regex: search.trim(), $options: "i" };
   }
 
   const result = await listReportsService({
@@ -67,9 +148,12 @@ export const getAllReportsController = tryCatch(async (req, res) => {
   });
 });
 
-
+/**
+ * Get Report By ID
+ */
 export const getReportByIdController = tryCatch(async (req, res) => {
   const { id } = req.params;
+
   const report = await findReportByIdService(id);
 
   if (!report) {
@@ -89,17 +173,19 @@ export const getReportByIdController = tryCatch(async (req, res) => {
   });
 });
 
-
+/**
+ * Get My Reports
+ */
 export const getMyReportsController = tryCatch(async (req, res) => {
-  const userSocialId = req.user.socialId;
+  const reportedBy = req.user?.socialId;
   const { page = 1, limit = 10, search = "" } = req.query;
 
   const filter = {};
   if (search.trim()) {
-    filter.title = { $regex: search.trim(), $options: "i" };
+    filter.reportTitle = { $regex: search.trim(), $options: "i" };
   }
 
-  const result = await getMyReportsService(userSocialId, {
+  const result = await getMyReportsService(reportedBy, {
     page: parseInt(page, 10),
     limit: parseInt(limit, 10),
     filter,
@@ -114,7 +200,9 @@ export const getMyReportsController = tryCatch(async (req, res) => {
   });
 });
 
-
+/**
+ * Delete Report
+ */
 export const deleteReportController = tryCatch(async (req, res) => {
   const { id } = req.params;
 
