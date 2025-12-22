@@ -122,8 +122,6 @@ export const getAllItems = async (filter = {}, { page, limit } = {}) => {
 };
 
 
-
-
 export const getAssetsFromDB = async (filter = {}, { page, limit } = {}) => {
   const query = Item.find(filter).sort({ createdAt: -1 }).lean();
   const total = await Item.countDocuments(filter);

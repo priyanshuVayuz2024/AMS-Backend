@@ -177,7 +177,7 @@ export const deleteItemService = async (id) => {
 /**
  * Bulk CSV processing service
  */
-const REQUIRED_COLUMNS = ["name", "description", "isActive"];
+const REQUIRED_COLUMNS = ["name", "description"];
 
 export const ItemBulkService = {
   processCSV: async (filePath) => {
@@ -200,8 +200,6 @@ export const ItemBulkService = {
         const rowData = {
           name: row.name,
           description: row.description || "",
-          isActive: row.isActive?.toLowerCase() === "true",
-          createdBy: row.createdBy || null,
         };
 
         // Validate
@@ -213,20 +211,7 @@ export const ItemBulkService = {
         if (error)
           throw new Error(error.details.map((d) => d.message).join(", "));
 
-        // Create item
         const { item } = await createItemService(value);
-
-        // Generate QR code
-        const qrUrl = `http://localhost:5000/report?itemId=${item._id}`;
-        const qrBase64 = await QRCode.toDataURL(qrUrl);
-
-        const upload = await cloudinary.uploader.upload(qrBase64, {
-          folder: "qr",
-          public_id: `item-${item._id}`,
-          overwrite: true,
-        });
-
-        item.qrCodeUrl = upload.secure_url;
 
         results.push({ row, status: "success", _id: item._id });
       } catch (err) {

@@ -50,17 +50,17 @@ export const createItem = tryCatch(async (req, res) => {
     video: videoUrls,
   });
 
-  // Generate QR code
-  const qrUrl = `http://localhost:5000/report?itemId=${item._id}`;
-  const qrBase64 = await QRCode.toDataURL(qrUrl);
+  // // Generate QR code
+  // const qrUrl = `https://ams-backend-2-0.onrender.com/report?itemId=${item._id}`;
+  // const qrBase64 = await QRCode.toDataURL(qrUrl);
 
-  const uploadResponse = await cloudinary.uploader.upload(qrBase64, {
-    folder: "qr",
-    public_id: `item-${item._id}`,
-    overwrite: true,
-  });
+  // const uploadResponse = await cloudinary.uploader.upload(qrBase64, {
+  //   folder: "qr",
+  //   public_id: `item-${item._id}`,
+  //   overwrite: true,
+  // });
 
-  item.qrCodeUrl = uploadResponse.secure_url;
+  // item.qrCodeUrl = uploadResponse.secure_url;
 
   return sendResponse({
     res,
