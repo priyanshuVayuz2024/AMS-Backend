@@ -8,7 +8,7 @@ import { validateRequestData } from "../middlewares/validateRequestData.js";
 const router = express.Router();
 
 router.get("/", authenticate, getAllUsers);
-router.get("/nr", authenticate, fetchUsersWithoutRoles);
+router.get("/no-role", authenticate, fetchUsersWithoutRoles);
 
 router.get(
   "/:id",

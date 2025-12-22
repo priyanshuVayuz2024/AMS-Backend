@@ -36,7 +36,7 @@ router.post(
 
 router.get("/", authenticate, checkModulePermission("Asset", "read"), getAllItems);
 
-router.get("/ua", authenticate, checkModulePermission("Asset", "read"), getUnallocatedAssets);
+router.get("/un-allocated", authenticate, getUnallocatedAssets);
 
 router.get("/:id", authenticate, checkModulePermission("Asset", "read"), getItemById);
 
