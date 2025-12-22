@@ -43,18 +43,25 @@ export const updateRoleService = async (id, updates) => {
     throw new Error("Role not found.");
   }
 
+  const updatePayload = {};
+
   const newName = updates.name?.trim();
+console.log(newName,"newName");
+console.log(role.name, "role.name");
+
+
+  // Only include name if it changed
   if (newName && newName !== role.name) {
     const existing = await findRoleByName(newName);
     if (existing) {
       throw new Error("Role name already exists.");
     }
+    updatePayload.name = newName;
   }
 
-  const updatePayload = {
-    name: updates.name?.trim() || role.name,
-    description: updates.description?.trim() || role.description,
-  };
+  if (updates.description !== undefined) {
+    updatePayload.description = updates.description.trim();
+  }
 
   if (Array.isArray(updates.modules)) {
     updatePayload.modules = updates.modules;
@@ -65,9 +72,9 @@ export const updateRoleService = async (id, updates) => {
   }
 
   const updatedRole = await updateRoleById(id, updatePayload);
-
   return { updatedRole };
 };
+
 
 
 /**

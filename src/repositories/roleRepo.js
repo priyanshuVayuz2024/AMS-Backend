@@ -36,13 +36,19 @@ export const findRoleByName = async (name) => {
  * Update Role by ID
  */
 export const updateRoleById = async (id, updateData) => {
-  return await Role.findByIdAndUpdate(id, updateData, {
-    new: true,
-    runValidators: true,
-  })
+  return await Role.findByIdAndUpdate(
+    id,
+    { $set: updateData }, 
+    {
+      new: true,
+      runValidators: true,
+    }
+  )
     .populate("modules.module")
     .populate("modules.permissions");
+
 };
+
 
 /**
  * Get All Roles (with pagination)

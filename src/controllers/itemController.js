@@ -28,6 +28,8 @@ export const createItem = tryCatch(async (req, res) => {
   const imageFiles = req.files?.image || [];
   const videoFiles = req.files?.video || [];
 
+
+
   
 
   const imageUrls = await Promise.all(
@@ -76,7 +78,6 @@ export const updateItem = tryCatch(async (req, res) => {
   const { id } = req.params;
   const { name, description, isActive } = req.body;
 
-  
   const imageFiles = req.files?.image || [];
   const videoFiles = req.files?.video || [];
 
@@ -87,8 +88,6 @@ export const updateItem = tryCatch(async (req, res) => {
   const videoUrls = await Promise.all(
     videoFiles.map((file) => uploadToCloudinary(file.buffer, "items", "video"))
   );
-
-
 
   const {updatedItem:item} = await updateItemService(id, {
     name,

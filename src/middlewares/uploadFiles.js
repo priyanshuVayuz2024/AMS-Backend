@@ -4,7 +4,7 @@ const storage = multer.memoryStorage();
 
 export const uploadFiles = multer({
   storage,
-  limits: { fileSize: 50 * 1024 * 1024 }, // max 50MB for any file
+  limits: { fileSize: 50 * 1024 * 1024 }, 
   fileFilter: (req, file, cb) => {
     if (file.fieldname === "image") {
       if (!file.mimetype.match(/^image\/(jpeg|jpg|png)$/)) {

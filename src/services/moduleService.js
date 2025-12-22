@@ -113,6 +113,7 @@ export const getModuleByIdService = async (moduleId) => {
  */
 export const deleteModuleService = async (id) => {
   const deleted = await deleteModuleById(id);
+console.log(deleted, "deleted");
 
   if (!deleted) {
     return {

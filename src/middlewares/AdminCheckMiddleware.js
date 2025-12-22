@@ -12,14 +12,11 @@ export const requireAdmin = async (req, res, next) => {
 
     const userSocialId = req.user.socialId;
 
-    // 1️⃣ Find active roles & populate roleId
     const userRoles = await UserRole.find({
       assignedToSocialId: userSocialId,
     }).populate("roleId");
-    console.log(userRoles,"userROles");
     
 
-    // 2️⃣ No roles assigned
     if (!userRoles.length) {
       return res.status(403).json({
         success: false,
@@ -28,7 +25,6 @@ export const requireAdmin = async (req, res, next) => {
     }
 
     
-    // 3️⃣ Check admin role
     const isAdmin = userRoles.some(
       (ur) => ur.roleId?.name?.toLowerCase() === "admin"
     );
@@ -43,7 +39,6 @@ export const requireAdmin = async (req, res, next) => {
 
     next();
   } catch (error) {
-    console.error("Admin middleware error:", error);
     return res.status(500).json({
       success: false,
       message: "Authorization failed",

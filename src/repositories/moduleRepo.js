@@ -1,4 +1,6 @@
+import mongoose from "mongoose";
 import Module from "../models/moduleModel.js";
+import Role from "../models/RoleModel.js";
 
 /**
  * Create Module
@@ -16,8 +18,7 @@ export const findModuleById = async (id) => {
 
 export const findModuleByName = async (name) => {
   return await Module.findOne({ name: new RegExp(`^${name}$`, "i") });
-}
-
+};
 
 /**
  * Update Module by ID
@@ -29,10 +30,7 @@ export const updateModuleById = async (id, updateData) => {
 /**
  * Get All Modules (with pagination)
  */
-export const getAllModules = async (
-  { search } = {},
-  { page, limit } = {}
-) => {
+export const getAllModules = async ({ search } = {}, { page, limit } = {}) => {
   const queryObj = {};
 
   if (search) {
@@ -57,10 +55,17 @@ export const getAllModules = async (
   return { data, total };
 };
 
-
 /**
  * Delete Module by ID
- */
+ * */
+
 export const deleteModuleById = async (id) => {
-  return await Module.findByIdAndDelete(id);
+  const moduleId = new mongoose.Types.ObjectId(id);
+
+  const res = await Role.updateMany(
+    { "modules.module": moduleId },  
+    { $pull: { modules: { module: moduleId } } }
+  );
+
+  return await Module.findByIdAndDelete(moduleId);
 };

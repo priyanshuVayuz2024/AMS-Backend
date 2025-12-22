@@ -64,6 +64,8 @@ export const createItemService = async (data) => {
  * Update an item
  */
 export const updateItemService = async (id, updates) => {
+  console.log(updates, "updates");
+  
   const item = await findItemById(id);
   if (!item) throw new Error("Item not found.");
 
@@ -105,10 +107,7 @@ export const updateItemService = async (id, updates) => {
   updatePayload.images = image;
   updatePayload.videos = video;
 
-    console.log(updatePayload,"updatePayload");
-  const updatedItem = await updateItemById(id, updatePayload);
-  console.log(updatedItem,"updatedItem");
-  
+  const updatedItem = await updateItemById(id, updatePayload);  
   return { updatedItem };
 };
 

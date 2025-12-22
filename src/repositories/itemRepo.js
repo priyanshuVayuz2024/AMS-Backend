@@ -1,5 +1,7 @@
 import Item from "../models/ItemModel.js";
+import Report from "../models/ReportModel.js"
 import EntityAdminMapping from "../models/EntityAdminMappingModel.js";
+import mongoose from "mongoose";
 
 /**
  * Create a new item
@@ -11,15 +13,42 @@ export const createItem = async (itemData) => {
 /**
  * Find item by ID
  */
+
 export const findItemById = async (id) => {
-  return await Item.findById(id).lean();
+  const item = await Item.findById(id).lean();
+  if (!item) return null;
+
+  const reportCount = await Report.countDocuments({
+    assetId: id,
+  });
+
+  return {
+    ...item,
+    reportCount,
+  };
 };
 
 /**
  * Update item by ID
  */
+
 export const updateItemById = async (id, updateData) => {
-  return await Item.findByIdAndUpdate(id, updateData, { new: true });
+  const updatedItem = await Item.findByIdAndUpdate(
+    id,
+    updateData,
+    { new: true }
+  ).lean();
+
+  if (!updatedItem) return null;
+
+  const reportCount = await Report.countDocuments({
+    assetId: id, 
+  });
+
+  return {
+    ...updatedItem,
+    reportCount,
+  };
 };
 
 /**
