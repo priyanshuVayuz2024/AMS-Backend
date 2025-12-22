@@ -114,7 +114,7 @@ export const updateItemService = async (id, updates) => {
 /**
  * List items with optional pagination and search
  */
-export const listItemsService = async ({ page, limit, search = "" }) => {
+export const listItemsService = async ({ page, limit, search = "" }) => {  
   const filter = {};
   if (search) filter.name = { $regex: search, $options: "i" };
 
