@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import UserRole from "../models/UserRoleModel.js";
 /**
  * Create Role Assignee
@@ -10,7 +11,26 @@ export const createRoleAssignee = async (assigneeData) => {
  * Find Role Assignee by ID
  */
 export const findRoleAssigneeById = async (id) => {
-  return await UserRole.findById(id).populate("roleId");
+  const doc = await UserRole.findById(id).populate({
+    path: "roleId",
+    populate: {
+      path: "modules.module",
+      select: "name",
+    },
+  });
+
+  if (!doc) return null;
+
+  doc.roleId.modules = doc.roleId.modules.map((m) => ({
+    module: mongoose.Types.ObjectId.isValid(m.module)
+      ? m.module
+      : m.module?._id,
+
+    permissions: m.permissions,
+    moduleName: m.moduleName || m.module?.name || null,
+  }));
+
+  return doc;
 };
 
 /**
@@ -67,47 +87,46 @@ export const getAllRoleAssignees = async (
   });
 
   pipeline.push({
-  $lookup: {
-    from: "roles",
-    let: { roleIdd: "$roleId" },
-    pipeline: [
-      { $match: { $expr: { $eq: ["$_id", "$$roleIdd"] } } },
+    $lookup: {
+      from: "roles",
+      let: { roleIdd: "$roleId" },
+      pipeline: [
+        { $match: { $expr: { $eq: ["$_id", "$$roleIdd"] } } },
 
-      { $unwind: { path: "$modules", preserveNullAndEmptyArrays: true } },
-      {
-        $lookup: {
-          from: "modules",
-          localField: "modules.module",
-          foreignField: "_id",
-          as: "moduleInfo",
-        },
-      },
-      { $unwind: { path: "$moduleInfo", preserveNullAndEmptyArrays: true } },
-      {
-        $project: {
-          _id: 1,
-          name: 1,
-          description: 1,
-          "modules.moduleId": "$modules.module",
-          "modules.permissions": "$modules.permissions",
-          "modules.moduleName": "$moduleInfo.name",
-        },
-      },
-      {
-        $group: {
-          _id: "$_id",
-          name: { $first: "$name" },
-          description: { $first: "$description" },
-          modules: {
-            $push: "$modules",
+        { $unwind: { path: "$modules", preserveNullAndEmptyArrays: true } },
+        {
+          $lookup: {
+            from: "modules",
+            localField: "modules.module",
+            foreignField: "_id",
+            as: "moduleInfo",
           },
         },
-      },
-    ],
-    as: "roles",
-  },
-});
-
+        { $unwind: { path: "$moduleInfo", preserveNullAndEmptyArrays: true } },
+        {
+          $project: {
+            _id: 1,
+            name: 1,
+            description: 1,
+            "modules.moduleId": "$modules.module",
+            "modules.permissions": "$modules.permissions",
+            "modules.moduleName": "$moduleInfo.name",
+          },
+        },
+        {
+          $group: {
+            _id: "$_id",
+            name: { $first: "$name" },
+            description: { $first: "$description" },
+            modules: {
+              $push: "$modules",
+            },
+          },
+        },
+      ],
+      as: "roles",
+    },
+  });
 
   // Stage 4: Unwind arrays for search
   pipeline.push(
@@ -149,7 +168,7 @@ export const getAllRoleAssignees = async (
   // Stage 8: Project final structure
   pipeline.push({
     $project: {
-      roles:1,
+      roles: 1,
       _id: 1,
       roleId: 1,
       assignedToSocialId: 1,
@@ -161,7 +180,6 @@ export const getAllRoleAssignees = async (
       Modules: "$roleData.modules",
     },
   });
-
 
   const data = await UserRole.aggregate(pipeline);
 

@@ -42,12 +42,7 @@ export const createRoleAssignee = tryCatch(async (req, res) => {
  */
 export const updateRoleAssignee = tryCatch(async (req, res) => {
   const { id } = req.params;
-  const {
-    roleId,
-    assignedToSocialId,
-    description,
-    isActive,
-  } = req.body;
+  const { roleId, assignedToSocialId, description, isActive } = req.body;
 
   const { updatedAssignee } = await updateRoleAssigneeService(id, {
     roleId,
@@ -65,7 +60,6 @@ export const updateRoleAssignee = tryCatch(async (req, res) => {
     },
   });
 });
-
 
 /**
  * Get All Role Assignees (search + optional pagination)
@@ -131,6 +125,7 @@ export const getRoleAssigneeById = tryCatch(async (req, res) => {
   const { id } = req.params;
 
   const assignee = await getRoleAssigneeByIdService(id);
+  console.log(assignee, "assignee");
 
   return sendResponse({
     res,

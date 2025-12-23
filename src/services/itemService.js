@@ -64,8 +64,6 @@ export const createItemService = async (data) => {
  * Update an item
  */
 export const updateItemService = async (id, updates) => {
-  console.log(updates, "updates");
-  
   const item = await findItemById(id);
   if (!item) throw new Error("Item not found.");
 
@@ -78,38 +76,44 @@ export const updateItemService = async (id, updates) => {
   const updatePayload = {
     name: newName || item.name,
     description: updates.description?.trim() || item.description,
-    isActive:
-      typeof updates.isActive === "boolean" ? updates.isActive : item.isActive,
+    isActive: typeof updates.isActive === "boolean" ? updates.isActive : item.isActive,
   };
 
-  const image = item?.image || [];
-  const video = item?.video || [];
+  // Initialize arrays with existing data
+  const images = item.images?.slice() || [];
+  const videos = item.videos?.slice() || [];
 
+  // Only handle new uploads (Buffers)
   if (updates.image?.length) {
     for (const file of updates.image) {
-      const url = await cloudinary.uploader.upload(file.buffer || file, {
-        folder: "items/image",
-      });
-      image.push(url.secure_url);
+      if (file?.buffer) {
+        const url = await cloudinary.uploader.upload(file.buffer, {
+          folder: "items/image",
+        });
+        images.push(url.secure_url);
+      }
     }
   }
 
   if (updates.video?.length) {
     for (const file of updates.video) {
-      const url = await cloudinary.uploader.upload(file.buffer || file, {
-        folder: "items/video",
-        resource_type: "video",
-      });
-      video.push(url.secure_url);
+      if (file?.buffer) {
+        const url = await cloudinary.uploader.upload(file.buffer, {
+          folder: "items/video",
+          resource_type: "video",
+        });
+        videos.push(url.secure_url);
+      }
     }
   }
 
-  updatePayload.images = image;
-  updatePayload.videos = video;
+  updatePayload.images = images;
+  updatePayload.videos = videos;
 
-  const updatedItem = await updateItemById(id, updatePayload);  
+  const updatedItem = await updateItemById(id, updatePayload);
   return { updatedItem };
 };
+
 
 /**
  * List items with optional pagination and search

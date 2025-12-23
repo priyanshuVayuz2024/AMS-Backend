@@ -54,7 +54,7 @@ router.put(
   authenticate,
   checkModulePermission("Asset", "update"),
   validateRequestData(itemStatusValidationSchema),
-  updateItem
+  updateItem,  
 );
 
 router.delete("/:id", authenticate, checkModulePermission("Asset", "delete"), deleteItem);

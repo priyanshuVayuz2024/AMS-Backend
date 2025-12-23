@@ -28,10 +28,6 @@ export const createItem = tryCatch(async (req, res) => {
   const imageFiles = req.files?.image || [];
   const videoFiles = req.files?.video || [];
 
-
-
-  
-
   const imageUrls = await Promise.all(
     imageFiles.map((file) => uploadToCloudinary(file.buffer, "items", "image"))
   );
@@ -39,7 +35,6 @@ export const createItem = tryCatch(async (req, res) => {
   const videoUrls = await Promise.all(
     videoFiles.map((file) => uploadToCloudinary(file.buffer, "items", "video"))
   );
-    
 
   const item = await createItemService({
     name,
@@ -70,7 +65,6 @@ export const createItem = tryCatch(async (req, res) => {
   });
 });
 
-
 /**
  * Update an item
  */
@@ -78,9 +72,11 @@ export const updateItem = tryCatch(async (req, res) => {
   const { id } = req.params;
   const { name, description, isActive } = req.body;
 
+  // Get uploaded files
   const imageFiles = req.files?.image || [];
   const videoFiles = req.files?.video || [];
 
+  // Upload new images/videos to Cloudinary
   const imageUrls = await Promise.all(
     imageFiles.map((file) => uploadToCloudinary(file.buffer, "items", "image"))
   );
@@ -89,14 +85,15 @@ export const updateItem = tryCatch(async (req, res) => {
     videoFiles.map((file) => uploadToCloudinary(file.buffer, "items", "video"))
   );
 
-  const {updatedItem:item} = await updateItemService(id, {
-    name,
-    description,
-    isActive,
-    image: imageUrls,
-    video: videoUrls,
-  });
-  
+  // Build update payload
+  const payload = { name, description, isActive };
+
+  if (imageUrls.length > 0) payload.image = imageUrls;
+  if (videoUrls.length > 0) payload.video = videoUrls;
+
+  // Call service
+  const { updatedItem: item } = await updateItemService(id, payload);
+
   return sendResponse({
     res,
     statusCode: 200,
@@ -104,6 +101,7 @@ export const updateItem = tryCatch(async (req, res) => {
     data: item,
   });
 });
+
 
 /**
  * List items with optional pagination and search
@@ -117,11 +115,17 @@ export const getAllItems = tryCatch(async (req, res) => {
     const parsedPage = parseInt(page, 10);
     const parsedLimit = parseInt(limit, 10);
 
-    if (isNaN(parsedPage) || isNaN(parsedLimit) || parsedPage <= 0 || parsedLimit <= 0) {
+    if (
+      isNaN(parsedPage) ||
+      isNaN(parsedLimit) ||
+      parsedPage <= 0 ||
+      parsedLimit <= 0
+    ) {
       return sendErrorResponse({
         res,
         statusCode: 400,
-        message: "Invalid pagination parameters. 'page' and 'limit' must be positive numbers.",
+        message:
+          "Invalid pagination parameters. 'page' and 'limit' must be positive numbers.",
       });
     }
 
@@ -140,22 +144,31 @@ export const getAllItems = tryCatch(async (req, res) => {
   });
 });
 
-
 export const getUnallocatedAssets = tryCatch(async (req, res) => {
   const { page, limit, search = "" } = req.query;
 
   const parsedPage = page ? parseInt(page, 10) : undefined;
   const parsedLimit = limit ? parseInt(limit, 10) : undefined;
 
-  if ((page && isNaN(parsedPage)) || (limit && isNaN(parsedLimit)) || (parsedPage && parsedPage <= 0) || (parsedLimit && parsedLimit <= 0)) {
+  if (
+    (page && isNaN(parsedPage)) ||
+    (limit && isNaN(parsedLimit)) ||
+    (parsedPage && parsedPage <= 0) ||
+    (parsedLimit && parsedLimit <= 0)
+  ) {
     return sendErrorResponse({
       res,
       statusCode: 400,
-      message: "Invalid pagination parameters. 'page' and 'limit' must be positive numbers.",
+      message:
+        "Invalid pagination parameters. 'page' and 'limit' must be positive numbers.",
     });
   }
 
-  const options = { page: parsedPage, limit: parsedLimit, search: search.trim() };
+  const options = {
+    page: parsedPage,
+    limit: parsedLimit,
+    search: search.trim(),
+  };
 
   const result = await listUnallocatedAssetsService(options);
 
@@ -182,8 +195,6 @@ export const getItemById = tryCatch(async (req, res) => {
     data: item,
   });
 });
-
-
 
 /**
  * Delete an item

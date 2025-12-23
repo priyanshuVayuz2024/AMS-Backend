@@ -33,17 +33,10 @@ export const findItemById = async (id) => {
  */
 
 export const updateItemById = async (id, updateData) => {
-  const updatedItem = await Item.findByIdAndUpdate(
-    id,
-    updateData,
-    { new: true }
-  ).lean();
-
+  const updatedItem = await Item.findByIdAndUpdate(id, updateData, { new: true }).lean();
   if (!updatedItem) return null;
 
-  const reportCount = await Report.countDocuments({
-    assetId: id, 
-  });
+  const reportCount = await Report.countDocuments({ assetId: id });
 
   return {
     ...updatedItem,

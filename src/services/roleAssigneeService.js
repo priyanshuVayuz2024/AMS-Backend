@@ -86,6 +86,8 @@ export const updateRoleAssigneeService = async (id, updates) => {
  */
 export const getRoleAssigneeByIdService = async (id) => {
   const assignee = await findRoleAssigneeById(id);
+console.log(JSON.stringify(assignee, null, 2), "assigneeeee");
+
   if (!assignee) {
     throw new Error("Role assignee not found.");
   }
