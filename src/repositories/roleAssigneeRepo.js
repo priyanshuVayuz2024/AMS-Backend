@@ -1,10 +1,22 @@
 import mongoose from "mongoose";
 import UserRole from "../models/UserRoleModel.js";
+import Role from "../models/RoleModel.js";
 /**
  * Create Role Assignee
  */
 export const createRoleAssignee = async (assigneeData) => {
-  return await UserRole.create(assigneeData);
+  const { assignedToSocialId, roleId } = assigneeData;
+
+  // Remove any existing role for this user
+  await UserRole.deleteMany({
+    assignedToSocialId,
+  });
+
+  // Assign new role
+  return await UserRole.create({
+    assignedToSocialId,
+    roleId,
+  });
 };
 
 /**
@@ -189,8 +201,33 @@ export const getAllRoleAssignees = async (
 /**
  *  Delete Role Assignee
  */
-export const deleteRoleAssigneeById = async (id) => {
-  return await UserRole.findByIdAndDelete(id);
+export const deleteRoleAssigneeById = async (userRoleId) => {
+  
+  const userRole = await UserRole.findById(userRoleId);
+
+  if (!userRole) return null;
+  const socialId = userRole.assignedToSocialId;
+
+  await UserRole.findByIdAndDelete(userRoleId);
+  const remainingRole = await UserRole.findOne({
+    assignedToSocialId: socialId,
+  });
+
+  if (!remainingRole) {
+    const defaultUserRole = await Role.findOne({
+      name: "User",
+      isActive: true,
+    });
+
+    if (defaultUserRole) {
+      await UserRole.create({
+        assignedToSocialId: socialId,
+        roleId: defaultUserRole._id,
+      });
+    }
+  }
+
+  return true;
 };
 
 export const checkUserHasRole = async (assignedToSocialId, roleName) => {

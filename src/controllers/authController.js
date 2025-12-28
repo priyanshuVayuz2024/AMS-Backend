@@ -42,7 +42,7 @@ export const login = async (req, res) => {
       return sendErrorResponse({
         res,
         statusCode: 401,
-        message: "Invalid socialId or authenticationCode",
+        message: "Invalid Credentials",
       });
     }
 
@@ -66,12 +66,20 @@ export const login = async (req, res) => {
     }
 
     let userRoles = await getUserRoleFromUserRolesService(user.socialId);
+    console.log(userRoles, "userRoles");
+
     //  If no role assigned → assign default "User" role
     if (!userRoles || userRoles.length === 0) {
       const defaultUserRole = await Role.findOne({
         name: "User",
         isActive: true,
       });
+
+      const defaultUserRole2 = await Role.findOne({
+        name: "User",
+        // isActive: true,
+      });
+      console.log(defaultUserRole, "defaultUserRole");
 
       if (defaultUserRole) {
         // prevent duplicates
@@ -82,7 +90,7 @@ export const login = async (req, res) => {
 
         if (!exists) {
           await UserRole.create({
-            assignedToSocialId: user.socialId, 
+            assignedToSocialId: user.socialId,
             roleId: defaultUserRole._id,
           });
         }

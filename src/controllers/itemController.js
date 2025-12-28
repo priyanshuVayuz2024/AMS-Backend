@@ -8,6 +8,7 @@ import {
   updateItemService,
   ItemBulkService,
   listUnallocatedAssetsService,
+  listItemsServiceForReports,
 } from "../services/itemService.js";
 
 import {
@@ -144,8 +145,53 @@ export const getAllItems = tryCatch(async (req, res) => {
   });
 });
 
-export const getUnallocatedAssets = tryCatch(async (req, res) => {
+
+
+export const getAllItemsForReports = tryCatch(async (req, res) => {
   const { page, limit, search = "" } = req.query;
+
+  const options = {
+    search: search.trim(),
+    user: req.user,
+    isModuleAdmin: req.isModuleAdmin, 
+  };
+
+  if (page !== undefined && limit !== undefined) {
+    const parsedPage = parseInt(page, 10);
+    const parsedLimit = parseInt(limit, 10);
+
+    if (
+      isNaN(parsedPage) ||
+      isNaN(parsedLimit) ||
+      parsedPage <= 0 ||
+      parsedLimit <= 0
+    ) {
+      return sendErrorResponse({
+        res,
+        statusCode: 400,
+        message:
+          "Invalid pagination parameters. 'page' and 'limit' must be positive numbers.",
+      });
+    }
+
+    options.page = parsedPage;
+    options.limit = parsedLimit;
+  }
+
+  const result = await listItemsServiceForReports(options);
+
+  return sendResponse({
+    res,
+    statusCode: 200,
+    message: "Items fetched successfully",
+    data: result.data,
+    meta: result.meta,
+  });
+});
+
+
+export const getUnallocatedAssets = tryCatch(async (req, res) => {
+  const { page, limit, search = "", selectedAssetId } = req.query;
 
   const parsedPage = page ? parseInt(page, 10) : undefined;
   const parsedLimit = limit ? parseInt(limit, 10) : undefined;
@@ -168,6 +214,7 @@ export const getUnallocatedAssets = tryCatch(async (req, res) => {
     page: parsedPage,
     limit: parsedLimit,
     search: search.trim(),
+    selectedAssetId, 
   };
 
   const result = await listUnallocatedAssetsService(options);
@@ -180,6 +227,7 @@ export const getUnallocatedAssets = tryCatch(async (req, res) => {
     meta: result.meta,
   });
 });
+
 
 /**
  * Get a single item by ID

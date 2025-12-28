@@ -115,6 +115,60 @@ export const getAllItems = async (filter = {}, { page, limit } = {}) => {
 };
 
 
+
+export const getAllItemsRepo = async (
+  filter = {},
+  { page, limit } = {}
+) => {
+  const pipeline = [];
+
+  pipeline.push({ $match: filter });
+
+  pipeline.push({
+    $lookup: {
+      from: "reports",
+      let: { itemIdStr: { $toString: "$_id" } },
+      pipeline: [
+        {
+          $match: {
+            $expr: {
+              $eq: ["$assetId", "$$itemIdStr"],
+            },
+          },
+        },
+      ],
+      as: "reports",
+    },
+  });
+
+  pipeline.push({
+    $addFields: {
+      reportCount: { $size: "$reports" },
+    },
+  });
+
+  pipeline.push({
+    $project: {
+      reports: 0,
+    },
+  });
+
+  pipeline.push({ $sort: { createdAt: -1 } });
+
+  if (page && limit) {
+    pipeline.push(
+      { $skip: (Number(page) - 1) * Number(limit) },
+      { $limit: Number(limit) }
+    );
+  }
+
+  const data = await Item.aggregate(pipeline);
+  
+  const total = await Item.countDocuments(filter);
+
+  return { data, total };
+};
+
 export const getAssetsFromDB = async (filter = {}, { page, limit } = {}) => {
   const query = Item.find(filter).sort({ createdAt: -1 }).lean();
   const total = await Item.countDocuments(filter);

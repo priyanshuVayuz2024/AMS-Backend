@@ -103,30 +103,24 @@ export const updateReportController = tryCatch(async (req, res) => {
 export const getAllReportsController = tryCatch(async (req, res) => {
   const { page = 1, limit = 10, search = "" } = req.query;
 
-  const assignedAssets = await getAllAssetAssignmentsForUser(req.user.socialId);
-  const assignedAssetIds = assignedAssets.map((a) => a.entityId.toString());
-
   let filter = {};
-  const userRole = await UserRole.findOne({
-    assignedToSocialId: req.user.socialId,
-  }).populate("roleId");
-  console.log(userRole, "userRoleuuugyhjwd");
 
-  // Check if user is admin
-  const isAdmin = userRole.roleId.name === "admin";
-  console.log(isAdmin, "iadmin234567");
+  /**
+   * req.isModuleAdmin is set by checkModulePermission middleware
+   * true  -> user has all permissions (or system admin)
+   * false -> user has partial permissions
+   */
 
-  if (!isAdmin) {
+  if (!req.isModuleAdmin) {
     const assignedAssets = await getAllAssetAssignmentsForUser(
       req.user.socialId
     );
-    const assignedAssetIds = assignedAssets.map((a) => a.entityId.toString());
+
+    const assignedAssetIds = assignedAssets.map((a) =>
+      a.entityId.toString()
+    );
 
     filter.assetId = { $in: assignedAssetIds };
-  }
-
-  if (search.trim()) {
-    filter.reportTitle = { $regex: search.trim(), $options: "i" };
   }
 
   if (search.trim()) {
@@ -147,6 +141,8 @@ export const getAllReportsController = tryCatch(async (req, res) => {
     meta: result.meta,
   });
 });
+
+
 
 /**
  * Get Report By ID

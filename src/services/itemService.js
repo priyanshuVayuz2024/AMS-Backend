@@ -9,9 +9,11 @@ import {
   findItemById,
   findItemByName,
   getAllItems,
+  getAllItemsRepo,
   getAssetsFromDB,
   updateItemById,
 } from "../repositories/itemRepo.js";
+import { getAllAssetAssignmentsForUser } from "../repositories/assetAssignmentRepo.js";
 
 /**
  * Create a new item
@@ -46,8 +48,6 @@ export const createItemService = async (data) => {
     }
   }
 
-
-
   const item = await createItem({
     name: trimmedName,
     description: data?.description?.trim(),
@@ -76,7 +76,8 @@ export const updateItemService = async (id, updates) => {
   const updatePayload = {
     name: newName || item.name,
     description: updates.description?.trim() || item.description,
-    isActive: typeof updates.isActive === "boolean" ? updates.isActive : item.isActive,
+    isActive:
+      typeof updates.isActive === "boolean" ? updates.isActive : item.isActive,
   };
 
   // Initialize arrays with existing data
@@ -114,11 +115,10 @@ export const updateItemService = async (id, updates) => {
   return { updatedItem };
 };
 
-
 /**
  * List items with optional pagination and search
  */
-export const listItemsService = async ({ page, limit, search = "" }) => {  
+export const listItemsService = async ({ page, limit, search = "" }) => {
   const filter = {};
   if (search) filter.name = { $regex: search, $options: "i" };
 
@@ -135,13 +135,76 @@ export const listItemsService = async ({ page, limit, search = "" }) => {
   };
 };
 
+export const listItemsServiceForReports = async ({
+  page,
+  limit,
+  search = "",
+  user,
+  isModuleAdmin,
+}) => {
+  const filter = {};
+
+  if (search) {
+    filter.name = { $regex: search, $options: "i" };
+  }
+
+  /**
+   * IMPORTANT:
+   * isModuleAdmin comes from REPORTS permissions
+   */
+  if (!isModuleAdmin) {
+    const assignedAssets = await getAllAssetAssignmentsForUser(
+      user.socialId
+    );
+
+    const assignedAssetIds = assignedAssets.map((a) =>
+      a.entityId.toString()
+    );
+
+    filter._id = { $in: assignedAssetIds };
+  }
+
+  const { data, total } = await getAllItemsRepo(filter, {
+    page,
+    limit,
+  });
+  
+
+  return {
+    data,
+    meta: {
+      total,
+      page,
+      limit,
+      totalPages: page && limit ? Math.ceil(total / limit) : 1,
+    },
+  };
+};
+
+
+
 export const listUnallocatedAssetsService = async ({
   page,
   limit,
   search = "",
+  selectedAssetId,
 }) => {
-  const filter = { allocationStatus: "unallocated" };
+  const filter = {};
 
+  let selectedObjectId;
+
+  if (selectedAssetId && mongoose.Types.ObjectId.isValid(selectedAssetId)) {
+    selectedObjectId = new mongoose.Types.ObjectId(selectedAssetId);
+  }
+
+  if (selectedObjectId) {
+    filter.$or = [
+      { allocationStatus: "unallocated" },
+      { _id: selectedObjectId },
+    ];
+  } else {
+    filter.allocationStatus = "unallocated";
+  }
   if (search) {
     filter.name = { $regex: search, $options: "i" };
   }

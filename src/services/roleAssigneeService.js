@@ -172,6 +172,8 @@ export const listRoleAssigneesService = async ({
  */
 export const deleteRoleAssigneeService = async (id) => {
   const deleted = await deleteRoleAssigneeById(id);
+  console.log(deleted,"deleted22");
+  
 
   if (!deleted) {
     return {

@@ -74,15 +74,23 @@ export const listAssetAssignmentsService = async ({
   limit,
   search = "",
   user,
-  isStrictReadOnly,
+  isModuleAdmin,
 }) => {
   const filter = {};
 
-  if (isStrictReadOnly) {
-    filter.userSocialId = user.socialId; 
+  /**
+   * If user is NOT module admin
+   * → restrict to own assignments
+   */
+  if (!isModuleAdmin) {
+    filter.userSocialId = user.socialId;
   }
 
-  const { data, total } = await getAllAssetAssignments(filter, { page, limit, search });
+  const { data, total } = await getAllAssetAssignments(filter, {
+    page,
+    limit,
+    search,
+  });
 
   return {
     data,
@@ -94,6 +102,7 @@ export const listAssetAssignmentsService = async ({
     },
   };
 };
+
 
 
 
