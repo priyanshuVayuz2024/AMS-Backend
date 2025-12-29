@@ -86,13 +86,31 @@ export const updateRoleAssigneeService = async (id, updates) => {
  */
 export const getRoleAssigneeByIdService = async (id) => {
   const assignee = await findRoleAssigneeById(id);
-console.log(JSON.stringify(assignee, null, 2), "assigneeeee");
 
   if (!assignee) {
     throw new Error("Role assignee not found.");
   }
 
-  return assignee.toObject ? assignee.toObject() : assignee;
+  const assigneeObj = assignee.toObject
+    ? assignee.toObject()
+    : assignee;
+
+  const user = await User.findOne(
+    { socialId: assigneeObj.assignedToSocialId },
+    {
+      name: 1,
+      email: 1,
+      socialId: 1,
+      department: 1,
+      isActive: 1,
+      image: 1,
+    }
+  ).lean();
+
+  return {
+    ...assigneeObj,
+    user: user || null,
+  };
 };
 
 /**

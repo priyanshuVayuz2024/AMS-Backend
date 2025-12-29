@@ -125,7 +125,6 @@ export const getRoleAssigneeById = tryCatch(async (req, res) => {
   const { id } = req.params;
 
   const assignee = await getRoleAssigneeByIdService(id);
-  console.log(assignee, "assignee");
 
   return sendResponse({
     res,
