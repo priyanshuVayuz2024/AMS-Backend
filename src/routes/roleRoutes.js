@@ -13,6 +13,7 @@ import {
   roleStatusValidationSchema,
   roleValidationSchema,
 } from "../validationSchema/rolesValidationSchema.js";
+import { getActiveRoles } from "../controllers/roleAssigneeController.js";
 
 const router = express.Router();
 
@@ -22,6 +23,7 @@ router.use(authenticate, requireAdmin);
 router.post("/", validateRequestData(roleValidationSchema), createRole);
 
 router.get("/", getAllRoles);
+router.get("/active", getActiveRoles);
 
 router.get("/:id", getRoleById);
 

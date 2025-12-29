@@ -3,6 +3,7 @@ import {
   deleteRoleById,
   findRoleById,
   findRoleByName,
+  getActiveRolesRepo,
   getAllRoles,
   updateRoleById,
 } from "../repositories/roleRepo.js";
@@ -46,11 +47,7 @@ export const updateRoleService = async (id, updates) => {
   const updatePayload = {};
 
   const newName = updates.name?.trim();
-console.log(newName,"newName");
-console.log(role.name, "role.name");
 
-
-  // Only include name if it changed
   if (newName && newName !== role.name) {
     const existing = await findRoleByName(newName);
     if (existing) {
@@ -117,6 +114,38 @@ export const listRolesService = async ({ page, limit, search = "" }) => {
     },
   };
 };
+
+
+export const listActiveRolesService = async ({ search = "" }) => {
+  const { data } = await getActiveRolesRepo({ search });
+
+  const adminRole = data.find(
+    (role) => role.name.toLowerCase() === "admin"
+  );
+
+  if (adminRole) {
+    const allModules = await Module.find({ isActive: true });
+    const allPermissions = await Permission.find({ isActive: true });
+    const actions = allPermissions.map((p) => p.action);
+
+    adminRole.modules = allModules.map((mod) => ({
+      module: mod,
+      permissions: actions,
+    }));
+  }
+
+  const filteredData = data.filter(
+    (role) => role.name.toLowerCase() !== "admin"
+  );
+
+  return {
+    data: filteredData,
+    meta: {
+      total: filteredData.length,
+    },
+  };
+};
+
 
 
 /**

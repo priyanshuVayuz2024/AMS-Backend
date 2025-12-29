@@ -86,6 +86,31 @@ export const getAllRoles = async (
   return { data, total };
 };
 
+
+/**
+ * Get Active Roles 
+ */
+export const getActiveRolesRepo = async ({ search } = {}) => {
+  const queryObj = { isActive: true };
+
+  if (search) {
+    queryObj.name = { $regex: search, $options: "i" };
+  }
+
+  const data = await Role.find(queryObj)
+    .sort({ createdAt: -1 })
+    .populate("modules.module")
+    .populate("modules.permissions")
+    .lean();
+
+  return {
+    data,
+    total: data.length,
+  };
+};
+
+
+
 /**
  * Delete Role by ID
  */

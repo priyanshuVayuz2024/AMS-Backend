@@ -1,3 +1,4 @@
+import Role from "../models/RoleModel.js";
 import {
   createModule,
   deleteModuleById,
@@ -36,6 +37,9 @@ export const createModuleService = async (data) => {
 /**
  * Update Module
  */
+import Role from "../models/RoleModel.js";
+import Module from "../models/ModuleModel.js";
+
 export const updateModuleService = async (id, updates) => {
   const module = await findModuleById(id);
   if (!module) {
@@ -61,8 +65,33 @@ export const updateModuleService = async (id, updates) => {
 
   const updatedModule = await updateModuleById(id, updatePayload);
 
+  if (module.isActive === true && updates.isActive === false) {
+    //  Find roles that include this module
+    const roles = await Role.find({ "modules.module": id });
+
+    for (const role of roles) {
+      const moduleIds = role.modules.map((m) => m.module);
+
+      //  Check if ANY module is still active
+      const activeModuleExists = await Module.exists({
+        _id: { $in: moduleIds },
+        isActive: true,
+      });
+
+      //  If NO active modules → deactivate role
+      if (!activeModuleExists) {
+        await Role.updateOne(
+          { _id: role._id },
+          { $set: { isActive: false } }
+        );
+      }
+    }
+  }
+
   return { updatedModule };
 };
+
+
 
 export const listModulesService = async (
   { page, limit, search = "" },

@@ -7,6 +7,7 @@ import {
   listRoleAssigneesService,
   deleteRoleAssigneeService,
 } from "../services/roleAssigneeService.js";
+import { listActiveRolesService } from "../services/roleService.js";
 
 import {
   sendResponse,
@@ -117,6 +118,27 @@ export const getAllRoleAssignees = tryCatch(async (req, res) => {
     meta: result.meta,
   });
 });
+
+
+/**
+ * Get Active Role Assignees 
+ */
+export const getActiveRoles = tryCatch(async (req, res) => {
+  const { search = "" } = req.query;
+
+  const result = await listActiveRolesService({
+    search: search.trim(),
+  });
+
+  return sendResponse({
+    res,
+    statusCode: 200,
+    message: "Active roles fetched successfully",
+    data: result.data,
+    meta: result.meta,
+  });
+});
+
 
 /**
  * Get Role Assignee by ID
