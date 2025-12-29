@@ -9,6 +9,7 @@ import {
   ItemBulkService,
   listUnallocatedAssetsService,
   listItemsServiceForReports,
+  listActiveItemsService,
 } from "../services/itemService.js";
 
 import {
@@ -145,6 +146,22 @@ export const getAllItems = tryCatch(async (req, res) => {
   });
 });
 
+
+export const getActiveItems = tryCatch(async (req, res) => {
+  const { search = "" } = req.query;
+
+  const result = await listActiveItemsService({
+    search: search.trim(),
+  });
+
+  return sendResponse({
+    res,
+    statusCode: 200,
+    message: "Active items fetched successfully",
+    data: result.data,
+    meta: result.meta,
+  });
+});
 
 
 export const getAllItemsForReports = tryCatch(async (req, res) => {

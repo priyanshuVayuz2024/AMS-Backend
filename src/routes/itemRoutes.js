@@ -9,6 +9,7 @@ import {
   uploadItemsBulk,
   getUnallocatedAssets,
   getAllItemsForReports,
+  getActiveItems,
 } from "../controllers/itemController.js";
 import { checkModulePermission } from "../middlewares/ModulePermissionCheckMiddleware.js";
 import { authenticate } from "../middlewares/AuthMiddleware.js";
@@ -36,6 +37,8 @@ router.post(
 );
 
 router.get("/", authenticate, checkModulePermission("Asset", "read"), getAllItems);
+
+router.get("/active", authenticate, checkModulePermission("Report", "read"), getActiveItems);
 
 router.get("/asset-listing", authenticate, checkModulePermission("Report", "read"), getAllItemsForReports);
 

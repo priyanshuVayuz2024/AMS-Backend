@@ -58,13 +58,6 @@ export const login = async (req, res) => {
         isActive: true,
       });
     } else {
-      if (user.isActive === false) {
-        return sendErrorResponse({
-          res,
-          statusCode: 403,
-          message: "Your account is inactive. Please contact administrator.",
-        });
-      }
       user.name = data.name || user.name;
       user.email = data.email || user.email;
       user.department = data.department || user.department;
@@ -91,7 +84,7 @@ export const login = async (req, res) => {
       if (defaultUserRole) {
         // prevent duplicates
         const exists = await UserRole.findOne({
-          socialId: user.socialId,
+          assignedToSocialId: user.socialId,
           roleId: defaultUserRole._id,
         });
 
@@ -107,14 +100,29 @@ export const login = async (req, res) => {
       }
     }
 
+    // Filter only active user roles
+    const activeUserRoles = userRoles.filter((ur) => ur.isActive === true);
+    console.log(activeUserRoles,"activeUserRoles");
+    
+
+    if (activeUserRoles.length === 0) {
+      return sendErrorResponse({
+        res,
+        statusCode: 403,
+        message: "No active roles assigned to this user",
+      });
+    }
+
     // Group userRoles by roleId
     const roleMap = new Map();
 
-    for (const ur of userRoles) {
-      const roleId = ur.roleId?._id.toString();
+    for (const ur of activeUserRoles) {
+      // Extract roleId - handle both populated and non-populated cases
+      const roleIdValue = typeof ur.roleId === "object" ? ur.roleId._id : ur.roleId;
+      const roleId = roleIdValue.toString();
+      
       if (!roleMap.has(roleId)) {
         roleMap.set(roleId, {
-          role: ur.roleId?.name,
           roleId: roleId,
           permissions: [],
           entities: [],
@@ -156,9 +164,18 @@ export const login = async (req, res) => {
 
     const roles = roleMap.values().next().value || null;
 
-    const role = await findRoleById(roles?.roleId);
+    // Fetch full role object and filter modules to show only active ones
+    const roleId = roles?.roleId;
+    let role = await findRoleById(roleId);
 
-    const isadmin = roles?.role?.toLowerCase() === "admin" ? true : false;
+    if (role && role.modules && Array.isArray(role.modules)) {
+      // Filter modules to show only active ones
+      role.modules = role.modules.filter((m) => m.module?.isActive === true);
+    }
+    console.log(role,"role");
+    
+
+    const isadmin = role.name.toLowerCase() === "admin" ? true : false;
 
     const token = jwt.sign(
       { id: user?._id, socialId: user.socialId },

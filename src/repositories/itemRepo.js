@@ -116,6 +116,52 @@ export const getAllItems = async (filter = {}, { page, limit } = {}) => {
 
 
 
+export const getActiveItemsFromDB = async (filter = {}) => {
+  const finalFilter = {
+    ...filter,
+    isActive: true, 
+  };
+
+  const pipeline = [
+    { $match: finalFilter },
+
+    {
+      $lookup: {
+        from: "reports",
+        let: { itemIdStr: { $toString: "$_id" } },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $eq: ["$assetId", "$$itemIdStr"],
+              },
+            },
+          },
+        ],
+        as: "reports",
+      },
+    },
+
+    {
+      $addFields: {
+        reportCount: { $size: "$reports" },
+      },
+    },
+
+    {
+      $project: {
+        reports: 0,
+      },
+    },
+
+    { $sort: { createdAt: -1 } },
+  ];
+
+  const data = await Item.aggregate(pipeline);
+  return data;
+};
+
+
 export const getAllItemsRepo = async (
   filter = {},
   { page, limit } = {}
@@ -170,8 +216,16 @@ export const getAllItemsRepo = async (
 };
 
 export const getAssetsFromDB = async (filter = {}, { page, limit } = {}) => {
-  const query = Item.find(filter).sort({ createdAt: -1 }).lean();
-  const total = await Item.countDocuments(filter);
+  const finalFilter = {
+    ...filter,
+    isActive: true,
+  };
+
+  const query = Item.find(finalFilter)
+    .sort({ createdAt: -1 })
+    .lean();
+
+  const total = await Item.countDocuments(finalFilter);
 
   if (page && limit) {
     const skip = (page - 1) * limit;
@@ -181,6 +235,7 @@ export const getAssetsFromDB = async (filter = {}, { page, limit } = {}) => {
   const data = await query;
   return { data, total };
 };
+
 
 /**
  * Get items assigned to a specific user via EntityAdminMapping

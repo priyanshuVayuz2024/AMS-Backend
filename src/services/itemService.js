@@ -2,19 +2,21 @@ import { itemValidationSchema } from "../validationSchema/itemValidationSchema.j
 import csv from "csvtojson";
 import QRCode from "qrcode";
 import cloudinary from "../cloudinary/useCloudinary.js";
-import EntityAdminMapping from "../models/EntityAdminMapping.js";
+import EntityAdminMapping from "../models/EntityAdminMappingModel.js";
 import Report from "../models/ReportModel.js";
 import {
   createItem,
   deleteItemById,
   findItemById,
   findItemByName,
+  getActiveItemsFromDB,
   getAllItems,
   getAllItemsRepo,
   getAssetsFromDB,
   updateItemById,
 } from "../repositories/itemRepo.js";
 import { getAllAssetAssignmentsForUser } from "../repositories/assetAssignmentRepo.js";
+import mongoose from "mongoose";
 
 /**
  * Create a new item
@@ -99,7 +101,7 @@ export const updateItemService = async (id, updates) => {
         entityId: item._id,
         status: "assigned",
       },
-      { $set: { status: "inactive" } }
+      { $set: { status: "returned" } }
     );
 
     console.log("Asset assignments deactivated:", {
@@ -144,6 +146,26 @@ export const listItemsService = async ({ page, limit, search = "" }) => {
     },
   };
 };
+
+
+
+export const listActiveItemsService = async ({ search = "" }) => {
+  const filter = {};
+
+  if (search) {
+    filter.name = { $regex: search, $options: "i" };
+  }
+
+  const data = await getActiveItemsFromDB(filter);
+
+  return {
+    data,
+    meta: {
+      total: data.length,
+    },
+  };
+};
+
 
 export const listItemsServiceForReports = async ({
   page,
