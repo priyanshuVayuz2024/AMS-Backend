@@ -3,6 +3,7 @@ import {
   deleteModuleById,
   findModuleById,
   findModuleByName,
+  getActiveModules,
   getAllModules,
   updateModuleById,
 } from "../repositories/moduleRepo.js";
@@ -91,6 +92,23 @@ export const listModulesService = async (
       limit: limit || null,
       totalPages:
         page || limit ? Math.ceil(total / (limit || 10)) : 1,
+    },
+  };
+};
+
+
+export const listActiveModulesService = async ({ search = "" }, user) => {
+  const filters = {
+    search,
+    isActive: true,
+  };
+
+  const { data, total } = await getActiveModules(filters); 
+
+  return {
+    data,
+    meta: {
+      total,
     },
   };
 };

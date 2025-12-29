@@ -4,6 +4,7 @@ import {
   deleteModule,
   getAllModules,
   getModuleById,
+  listActiveModulesController,
   updateModule,
 } from "../controllers/moduleController.js";
 import { authenticate } from "../middlewares/AuthMiddleware.js";
@@ -22,6 +23,7 @@ router.use(authenticate, requireAdmin);
 router.post("/", validateRequestData(moduleValidationSchema), createModule);
 
 router.get("/", getAllModules);
+router.get("/active", listActiveModulesController);
 
 router.get("/:id", getModuleById);
 

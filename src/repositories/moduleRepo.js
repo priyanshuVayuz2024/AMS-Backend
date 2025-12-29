@@ -55,6 +55,27 @@ export const getAllModules = async ({ search } = {}, { page, limit } = {}) => {
   return { data, total };
 };
 
+
+/**
+ * Get Active Modules 
+ */
+export const getActiveModules = async ({ search } = {}) => {
+  const queryObj = { isActive: true };
+
+  if (search) {
+    queryObj.name = { $regex: search, $options: "i" };
+  }
+
+  const data = await Module.find(queryObj)
+    .sort({ createdAt: -1 })
+    .lean();
+
+  const total = data.length;
+
+  return { data, total };
+};
+
+
 /**
  * Delete Module by ID
  * */

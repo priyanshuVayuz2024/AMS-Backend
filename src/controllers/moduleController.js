@@ -2,6 +2,7 @@ import {
   createModuleService,
   deleteModuleService,
   getModuleByIdService,
+  listActiveModulesService,
   listModulesService,
   updateModuleService,
 } from "../services/moduleService.js";
@@ -87,9 +88,7 @@ export const getAllModules = tryCatch(async (req, res) => {
     payload.limit = parsedLimit;
   }
 
-  // 🔐 Logged-in user (set by auth middleware)
   const loggedInUser = req.user;
-  console.log(loggedInUser, "usersssss");
   
   const result = await listModulesService(payload, loggedInUser);
 
@@ -97,6 +96,24 @@ export const getAllModules = tryCatch(async (req, res) => {
     res,
     statusCode: 200,
     message: "Modules fetched successfully",
+    data: result.data,
+    meta: result.meta,
+  });
+});
+
+
+export const listActiveModulesController = tryCatch(async (req, res) => {
+  const { search } = req.query;
+
+  const result = await listActiveModulesService(
+    { search },
+    req.user
+  );
+
+  return sendResponse({
+    res,
+    statusCode: 200,
+    message: "Active modules fetched successfully",
     data: result.data,
     meta: result.meta,
   });
