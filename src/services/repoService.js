@@ -8,6 +8,7 @@ import {
 } from "../repositories/reportRepo.js";
 
 import { findItemById } from "../repositories/itemRepo.js";
+import User from "../models/UserModel.js";
 
 /**
  * Create Report
@@ -124,8 +125,6 @@ export const listReportsService = async ({ page = 1, limit = 10, filter = {} } =
   };
 };
 
-
-
 /**
  * Find Report By ID
  */
@@ -135,12 +134,23 @@ export const findReportByIdService = async (id) => {
 
   const asset = await findItemById(report.assetId);
 
+  const reporter = await User.findOne(
+    { socialId: report.reportedBy },
+    { name: 1, email: 1, socialId: 1 }
+  ).lean();
+
   return {
     ...report,
+    reportedBy: {
+      socialId: report.reportedBy,
+      name: reporter?.name || null,
+      email: reporter?.email || null,
+    },
     assetId: asset?._id || null,
     assetName: asset?.name || null,
   };
 };
+
 
 /**
  * Get My Reports

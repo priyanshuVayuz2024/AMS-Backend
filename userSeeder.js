@@ -26,8 +26,10 @@ const seedUsers = async () => {
       console.error("❌ Unexpected API response format:", data);
       process.exit(1);
     }
+    
 
     const users = data.data.map((user) => ({
+      image: user.profile_image,
       socialId: user.employee_id,
       name: user.fullname || user.name || "Unknown",
       email: user.email || "N/A",

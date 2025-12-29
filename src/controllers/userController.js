@@ -52,7 +52,7 @@ export const getAllUsers = tryCatch(async (req, res) => {
   return sendResponse({
     res,
     statusCode: 200,
-    message: "Items fetched successfully",
+    message: "Users fetched successfully",
     data: result.data,
     meta: result.meta,
   });

@@ -58,6 +58,13 @@ export const login = async (req, res) => {
         isActive: true,
       });
     } else {
+      if (user.isActive === false) {
+        return sendErrorResponse({
+          res,
+          statusCode: 403,
+          message: "Your account is inactive. Please contact administrator.",
+        });
+      }
       user.name = data.name || user.name;
       user.email = data.email || user.email;
       user.department = data.department || user.department;
