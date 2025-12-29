@@ -9,7 +9,7 @@ import {
   updateModuleById,
 } from "../repositories/moduleRepo.js";
 import { checkUserHasRole } from "../repositories/roleAssigneeRepo.js";
-
+import Module from "../models/moduleModel.js";
 
 /**
  * Create Module
@@ -37,9 +37,6 @@ export const createModuleService = async (data) => {
 /**
  * Update Module
  */
-import Role from "../models/RoleModel.js";
-import Module from "../models/ModuleModel.js";
-
 export const updateModuleService = async (id, updates) => {
   const module = await findModuleById(id);
   if (!module) {
