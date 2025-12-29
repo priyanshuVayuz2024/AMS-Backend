@@ -10,6 +10,7 @@ import {
 
 import Module from "../models/moduleModel.js";
 import Permission from "../models/PermissionModel.js";
+import UserRole from "../models/UserRoleModel.js";
 
 /**
  * Create Role
@@ -45,7 +46,6 @@ export const updateRoleService = async (id, updates) => {
   }
 
   const updatePayload = {};
-
   const newName = updates.name?.trim();
 
   if (newName && newName !== role.name) {
@@ -69,6 +69,15 @@ export const updateRoleService = async (id, updates) => {
   }
 
   const updatedRole = await updateRoleById(id, updatePayload);
+
+  if (role.isActive === true && updates.isActive === false) {
+    
+    await UserRole.updateMany(
+      { roleId: role._id },
+      { $set: { isActive: false } }
+    );
+  }
+
   return { updatedRole };
 };
 

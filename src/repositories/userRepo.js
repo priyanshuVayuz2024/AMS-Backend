@@ -134,6 +134,7 @@ export const findUserByIdRepo = async (id) => {
         email: 1,
         image: 1,
         socialId: 1,
+         department: 1, // ✅ ADD THIS
         isActive: 1,
         roles: 1,
         reports: 1,

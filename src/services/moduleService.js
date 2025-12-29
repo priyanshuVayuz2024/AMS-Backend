@@ -10,6 +10,7 @@ import {
 } from "../repositories/moduleRepo.js";
 import { checkUserHasRole } from "../repositories/roleAssigneeRepo.js";
 import Module from "../models/moduleModel.js";
+import UserRole from "../models/UserRoleModel.js";
 
 /**
  * Create Module
@@ -63,23 +64,34 @@ export const updateModuleService = async (id, updates) => {
   const updatedModule = await updateModuleById(id, updatePayload);
 
   if (module.isActive === true && updates.isActive === false) {
-    //  Find roles that include this module
-    const roles = await Role.find({ "modules.module": id });
+    const roles = await Role.find({ "modules.module": module._id });
 
     for (const role of roles) {
       const moduleIds = role.modules.map((m) => m.module);
 
-      //  Check if ANY module is still active
       const activeModuleExists = await Module.exists({
         _id: { $in: moduleIds },
         isActive: true,
       });
 
-      //  If NO active modules → deactivate role
-      if (!activeModuleExists) {
+      if (!activeModuleExists && role.isActive === true) {
         await Role.updateOne(
           { _id: role._id },
           { $set: { isActive: false } }
+        );
+
+        // deactivate role assignments
+        const result = await UserRole.updateMany(
+          { roleId: role._id, isActive: true },
+          { $set: { isActive: false } }
+        );
+
+        console.log(
+          `Role ${role.name} deactivated. Assignments updated:`,
+          {
+            matched: result.matchedCount,
+            modified: result.modifiedCount,
+          }
         );
       }
     }
@@ -87,6 +99,7 @@ export const updateModuleService = async (id, updates) => {
 
   return { updatedModule };
 };
+
 
 
 

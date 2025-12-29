@@ -2,7 +2,8 @@ import { itemValidationSchema } from "../validationSchema/itemValidationSchema.j
 import csv from "csvtojson";
 import QRCode from "qrcode";
 import cloudinary from "../cloudinary/useCloudinary.js";
-
+import EntityAdminMapping from "../models/EntityAdminMapping.js";
+import Report from "../models/ReportModel.js";
 import {
   createItem,
   deleteItemById,
@@ -63,9 +64,12 @@ export const createItemService = async (data) => {
 /**
  * Update an item
  */
+
 export const updateItemService = async (id, updates) => {
   const item = await findItemById(id);
   if (!item) throw new Error("Item not found.");
+
+  const wasActive = item.isActive;
 
   const newName = updates.name?.trim();
   if (newName && newName !== item.name) {
@@ -77,43 +81,49 @@ export const updateItemService = async (id, updates) => {
     name: newName || item.name,
     description: updates.description?.trim() || item.description,
     isActive:
-      typeof updates.isActive === "boolean" ? updates.isActive : item.isActive,
+      typeof updates.isActive === "boolean"
+        ? updates.isActive
+        : item.isActive,
+    images: item.images || [],
+    videos: item.videos || [],
   };
 
-  // Initialize arrays with existing data
-  const images = item.images?.slice() || [];
-  const videos = item.videos?.slice() || [];
-
-  // Only handle new uploads (Buffers)
-  if (updates.image?.length) {
-    for (const file of updates.image) {
-      if (file?.buffer) {
-        const url = await cloudinary.uploader.upload(file.buffer, {
-          folder: "items/image",
-        });
-        images.push(url.secure_url);
-      }
-    }
-  }
-
-  if (updates.video?.length) {
-    for (const file of updates.video) {
-      if (file?.buffer) {
-        const url = await cloudinary.uploader.upload(file.buffer, {
-          folder: "items/video",
-          resource_type: "video",
-        });
-        videos.push(url.secure_url);
-      }
-    }
-  }
-
-  updatePayload.images = images;
-  updatePayload.videos = videos;
+  if (updates.image?.length) updatePayload.images = updates.image;
+  if (updates.video?.length) updatePayload.videos = updates.video;
 
   const updatedItem = await updateItemById(id, updatePayload);
+
+  if (wasActive === true && updates.isActive === false) {
+    const assignmentResult = await EntityAdminMapping.updateMany(
+      {
+        entityId: item._id,
+        status: "assigned",
+      },
+      { $set: { status: "inactive" } }
+    );
+
+    console.log("Asset assignments deactivated:", {
+      matched: assignmentResult.matchedCount,
+      modified: assignmentResult.modifiedCount,
+    });
+
+    const reportResult = await Report.updateMany(
+      {
+        assetId: item._id.toString(), 
+        status: { $in: ["open", "in-progress"] },
+      },
+      { $set: { status: "closed" } }
+    );
+
+    console.log("Related reports closed:", {
+      matched: reportResult.matchedCount,
+      modified: reportResult.modifiedCount,
+    });
+  }
+
   return { updatedItem };
 };
+
 
 /**
  * List items with optional pagination and search
