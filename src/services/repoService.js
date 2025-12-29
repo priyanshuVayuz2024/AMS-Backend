@@ -68,16 +68,6 @@ export const updateReportService = async (id, updates) => {
     updatePayload.reportDescription = updates.reportDescription.trim();
   }
 
-  if (updates.image !== undefined) {
-  updatePayload.images = updates.image;
-}
-
-if (updates.video !== undefined) {
-  updatePayload.videos = updates.video; 
-}
-
- console.log(updatePayload, "updatePayload");
-
   if (updates.status) {
     const allowedStatuses = ["open", "in-progress", "resolved", "closed"];
     if (!allowedStatuses.includes(updates.status)) {
@@ -85,6 +75,20 @@ if (updates.video !== undefined) {
     }
     updatePayload.status = updates.status;
   }
+
+  const images = report.images?.slice() || [];
+  const videos = report.videos?.slice() || [];
+
+  if (updates.image?.length) {
+    images.push(...updates.image);
+  }
+
+  if (updates.video?.length) {
+    videos.push(...updates.video);
+  }
+
+  updatePayload.images = images;
+  updatePayload.videos = videos;
 
   const updatedReport = await updateReportById(id, updatePayload);
 
@@ -96,6 +100,7 @@ if (updates.video !== undefined) {
     assetName: asset?.name || null,
   };
 };
+
 
 /**
  * List All Reports

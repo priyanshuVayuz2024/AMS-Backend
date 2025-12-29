@@ -61,33 +61,32 @@ export const createReportController = tryCatch(async (req, res, next) => {
  */
 export const updateReportController = tryCatch(async (req, res) => {
   const { id } = req.params;
-
   const { reportTitle, reportDescription, status, assetId } = req.body;
 
-  const imageFiles = req.files?.image || [];
-  const videoFiles = req.files?.video || [];
-
-  const imageUrls = await Promise.all(
-    imageFiles.map((file) =>
-      uploadToCloudinary(file.buffer, "reports", "image")
-    )
-  );
-
-  const videoUrls = await Promise.all(
-    videoFiles.map((file) =>
-      uploadToCloudinary(file.buffer, "reports", "video")
-    )
-  );
-
-  
-  const updatedReport = await updateReportService(id, {
-    assetId,
+  const updates = {
     reportTitle,
     reportDescription,
     status,
-    image: imageUrls,
-    video: videoUrls,
-  });
+    assetId,
+  };
+
+  if (req.files?.image?.length) {
+    updates.image = await Promise.all(
+      req.files.image.map((file) =>
+        uploadToCloudinary(file.buffer, "Report", "image")
+      )
+    );
+  }
+
+  if (req.files?.video?.length) {
+    updates.video = await Promise.all(
+      req.files.video.map((file) =>
+        uploadToCloudinary(file.buffer, "Report", "video")
+      )
+    );
+  }
+
+  const updatedReport = await updateReportService(id, updates);
 
   return sendResponse({
     res,
@@ -96,6 +95,7 @@ export const updateReportController = tryCatch(async (req, res) => {
     data: updatedReport,
   });
 });
+
 
 /**
  * Get All Reports
