@@ -1,3 +1,4 @@
+import EntityAdminMapping from "../models/EntityAdminMappingModel.js";
 import Item from "../models/ItemModel.js";
 import {
   createAssetAssignment,
@@ -5,7 +6,6 @@ import {
   findAssetAssignment,
   getAllAssetAssignments,
   updateAssetAssignmentById,
- 
   deleteAssetAssignmentById,
 } from "../repositories/assetAssignmentRepo.js";
 
@@ -40,7 +40,6 @@ export const createAssetAssignmentService = async (data) => {
   return { assignment };
 };
 
-
 /**
  * Update an asset assignment (e.g., mark as returned)
  */
@@ -55,14 +54,28 @@ export const updateAssetAssignmentService = async (id, updates) => {
     }
     updatePayload.status = updates?.status;
   }
-  if(updates.entityId){
+  if (updates.entityId) {
     updatePayload.entityId = updates?.entityId;
   }
-  if(updates.userSocialId){
+  if (updates.userSocialId) {
     updatePayload.userSocialId = updates?.userSocialId;
   }
 
   const updatedAssignment = await updateAssetAssignmentById(id, updatePayload);
+
+  if (assignment.status === "assigned" && updates.status === "returned") {
+    const stillAssigned = await EntityAdminMapping.exists({
+      entityId: assignment.entityId,
+      status: "assigned",
+    });
+
+    if (!stillAssigned) {
+      await Item.findByIdAndUpdate(assignment.entityId, {
+        allocationStatus: "unallocated",
+      });
+    }
+  }
+
   return { updatedAssignment };
 };
 
@@ -103,10 +116,6 @@ export const listAssetAssignmentsService = async ({
   };
 };
 
-
-
-
-
 export const getAssetAssignmentByIdService = async (itemId) => {
   const asset = await findAssetAssignmentById(itemId);
   if (!asset) throw new Error("Asset not found.");
@@ -116,9 +125,30 @@ export const getAssetAssignmentByIdService = async (itemId) => {
 /**
  * Delete an asset assignment
  */
-export const deleteAssetAssignmentService = async (id) => {
-  const deleted = await deleteAssetAssignmentById(id);
-  if (!deleted) return { success: false, message: "Assignment not found" };
+export const deleteAssetAssignmentService = async (assignmentId) => {
+  const deletedAssignment = await EntityAdminMapping.findByIdAndDelete(
+    assignmentId
+  );
 
-  return { success: true, data: deleted };
+  if (!deletedAssignment) {
+    return { success: false, message: "Assignment not found" };
+  }
+
+  const { entityId } = deletedAssignment;
+
+  const stillAssigned = await EntityAdminMapping.exists({
+    entityId,
+    status: "assigned",
+  });
+
+  if (!stillAssigned) {
+    await Item.findByIdAndUpdate(entityId, {
+      allocationStatus: "unallocated",
+    });
+  }
+
+  return {
+    success: true,
+    data: deletedAssignment,
+  };
 };

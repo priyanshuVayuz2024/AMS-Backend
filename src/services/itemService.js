@@ -17,6 +17,7 @@ import {
 } from "../repositories/itemRepo.js";
 import { getAllAssetAssignmentsForUser } from "../repositories/assetAssignmentRepo.js";
 import mongoose from "mongoose";
+import Item from "../models/ItemModel.js";
 
 /**
  * Create a new item
@@ -83,9 +84,7 @@ export const updateItemService = async (id, updates) => {
     name: newName || item.name,
     description: updates.description?.trim() || item.description,
     isActive:
-      typeof updates.isActive === "boolean"
-        ? updates.isActive
-        : item.isActive,
+      typeof updates.isActive === "boolean" ? updates.isActive : item.isActive,
     images: item.images || [],
     videos: item.videos || [],
   };
@@ -109,9 +108,13 @@ export const updateItemService = async (id, updates) => {
       modified: assignmentResult.modifiedCount,
     });
 
+    await Item.findByIdAndUpdate(item._id, {
+      allocationStatus: "unallocated",
+    });
+
     const reportResult = await Report.updateMany(
       {
-        assetId: item._id.toString(), 
+        assetId: item._id.toString(),
         status: { $in: ["open", "in-progress"] },
       },
       { $set: { status: "closed" } }
@@ -125,7 +128,6 @@ export const updateItemService = async (id, updates) => {
 
   return { updatedItem };
 };
-
 
 /**
  * List items with optional pagination and search
@@ -147,8 +149,6 @@ export const listItemsService = async ({ page, limit, search = "" }) => {
   };
 };
 
-
-
 export const listActiveItemsService = async ({ search = "" }) => {
   const filter = {};
 
@@ -165,7 +165,6 @@ export const listActiveItemsService = async ({ search = "" }) => {
     },
   };
 };
-
 
 export const listItemsServiceForReports = async ({
   page,
@@ -185,13 +184,9 @@ export const listItemsServiceForReports = async ({
    * isModuleAdmin comes from REPORTS permissions
    */
   if (!isModuleAdmin) {
-    const assignedAssets = await getAllAssetAssignmentsForUser(
-      user.socialId
-    );
+    const assignedAssets = await getAllAssetAssignmentsForUser(user.socialId);
 
-    const assignedAssetIds = assignedAssets.map((a) =>
-      a.entityId.toString()
-    );
+    const assignedAssetIds = assignedAssets.map((a) => a.entityId.toString());
 
     filter._id = { $in: assignedAssetIds };
   }
@@ -200,7 +195,6 @@ export const listItemsServiceForReports = async ({
     page,
     limit,
   });
-  
 
   return {
     data,
@@ -212,8 +206,6 @@ export const listItemsServiceForReports = async ({
     },
   };
 };
-
-
 
 export const listUnallocatedAssetsService = async ({
   page,
