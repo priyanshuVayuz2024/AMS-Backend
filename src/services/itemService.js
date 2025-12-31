@@ -29,7 +29,6 @@ export const createItemService = async (data) => {
   const existing = await findItemByName(trimmedName);
   if (existing) throw new Error("Item name already exists.");
 
-  // Upload image/video if provided
   const image = [];
   const video = [];
 
@@ -293,7 +292,6 @@ export const ItemBulkService = {
           description: row.description || "",
         };
 
-        // Validate
         const { error, value } = itemValidationSchema.validate(rowData, {
           abortEarly: false,
           convert: true,

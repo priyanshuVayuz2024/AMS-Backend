@@ -80,7 +80,6 @@ export const updateModuleService = async (id, updates) => {
           { $set: { isActive: false } }
         );
 
-        // deactivate role assignments
         const result = await UserRole.updateMany(
           { roleId: role._id, isActive: true },
           { $set: { isActive: false } }

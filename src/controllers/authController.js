@@ -15,19 +15,67 @@ import UserRole from "../models/UserRoleModel.js";
 const PROFILE_BACKEND_URL = "https://profilebackend.vayuz.com/users/api/signin";
 const JWT_SECRET = process.env.JWT_SECRET || "supersecretkey";
 const JWT_EXPIRY = "24h";
+const RECAPTCHA_SECRET_KEY = process.env.RECAPTCHA_SECRET_KEY;
 
-// Login controller
-export const login = async (req, res) => {
+// Verify reCAPTCHA token with Google
+const verifyRecaptchaToken = async (token) => {
   try {
-    const { socialId, authenticationCode } = req.body;
+    
+    const response = await axios.post(
+      'https://www.google.com/recaptcha/api/siteverify',
+      null,
+      {
+        params: {
+          secret: RECAPTCHA_SECRET_KEY,
+          response: token,
+        },
+      }
+    );
+    console.log(response,"response");
+    
 
+    return response.data;
+  } catch (err) {
+    console.error('reCAPTCHA verification error:', err.message);
+    return { success: false };
+  }
+};
+
+export const login = async (req, res) => {
+
+ try {
+    const { socialId, authenticationCode, recaptchaToken } = req.body;
+
+    if (!recaptchaToken) {
+      return sendErrorResponse({
+        res,
+        statusCode: 400,
+        message: 'reCAPTCHA token is required',
+      });
+    }
+    console.log(recaptchaToken,"recaptcha");
+    
     if (!socialId || !authenticationCode) {
       return sendErrorResponse({
         res,
         statusCode: 400,
-        message: "socialId and authenticationCode are required",
+        message: 'socialId and authenticationCode are required',
       });
     }
+
+    const recaptchaData = await verifyRecaptchaToken(recaptchaToken);
+    console.log(recaptchaData,"recaptchaData");
+
+    const RECAPTCHA_SCORE_THRESHOLD = 0.5;
+
+    if (!recaptchaData.success || recaptchaData.score < RECAPTCHA_SCORE_THRESHOLD) {
+      return sendErrorResponse({
+        res,
+        statusCode: 403,
+        message: 'reCAPTCHA verification failed. Please try again.',
+      });
+    }
+
 
     const { data } = await axios.post(PROFILE_BACKEND_URL, {
       adminlogin: false,

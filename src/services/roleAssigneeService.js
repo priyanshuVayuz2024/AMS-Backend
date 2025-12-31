@@ -11,7 +11,6 @@ import {
 } from "../repositories/roleAssigneeRepo.js";
 
 import { findRoleById } from "../repositories/roleRepo.js";
-import { findUserByIdRepo } from "../repositories/userRepo.js";
 
 /**
  * Create Role Assignee
@@ -25,7 +24,6 @@ export const createRoleAssigneeService = async (data) => {
     throw new Error("Assigned Social ID is required.");
   }
 
-  // Validate role exists
   const role = await findRoleById(data.roleId);
   if (!role) {
     throw new Error("Role not found.");
@@ -132,7 +130,6 @@ export const getAssigneesByRoleIdService = async (roleId) => {
     throw new Error("Role ID is required.");
   }
 
-  // Validate role exists
   const role = await findRoleById(roleId);
   if (!role) {
     throw new Error("Role not found.");

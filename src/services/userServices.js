@@ -4,7 +4,6 @@ import { getPermissionsByRoleIdRepo } from "../repositories/rolePermissionRepo.j
 import {
   findUserByIdRepo,
   getAllUsers,
-  getUserRoleFromUserRolesRepo,
   updateUserById,
 } from "../repositories/userRepo.js";
 
@@ -78,7 +77,6 @@ export const getUsersWithoutRoles = async () => {
     const usersWithRoles = await UserRole.find({}, "assignedToSocialId");
     const assignedSocialIds = usersWithRoles.map((u) => u.assignedToSocialId);
 
-    // Find users whose socialId is NOT in the assignedSocialIds
     const usersWithoutRoles = await User.find({
       socialId: { $nin: assignedSocialIds },
     });

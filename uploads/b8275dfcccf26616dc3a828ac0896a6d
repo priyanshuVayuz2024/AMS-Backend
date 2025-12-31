@@ -1,4 +1,0 @@
-name,description,parentType,parentName,assignedToSocialId,isActive
-Logo,company's logo,Category,hall,I10222,TRUE
-tea,for making tea,Category,pantry1,I10219,FALSE
-marker,for conference work,Category,conference_ room,I10205,TRUE
