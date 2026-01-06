@@ -12,13 +12,53 @@ export const findUserById = async (id) => {
 };
 
 export const getUserRoleFromUserRolesService = async (socialId) => {
-  
-  return await UserRole.find({
-    assignedToSocialId: socialId,
-  }).populate({
-    path: "roleId",
-    select: "name",
-  });
+  // return await UserRole.find({
+  //   assignedToSocialId: socialId,
+  // }).populate({
+  //   path: "roleId",
+  //   select: "name",
+  // });
+  let roleRecord = await UserRole.aggregate([
+    {
+      $match: { assignedToSocialId: socialId },
+    },
+    {
+      $lookup: {
+        from: "roles",
+        localField: "roleId",
+        foreignField: "_id",
+        as: "assignedRole",
+      },
+    },
+    {
+      $lookup: {
+        from: "roles",
+        pipeline: [{ $match: { name: "User" } }],
+        as: "userRole",
+      },
+    },
+    { $unwind: "$assignedRole" },
+    { $unwind: "$userRole" },
+    {
+      $addFields: {
+        roleId: {
+          $cond: {
+            if: { $eq: ["$isActive", true] },
+            then: "$assignedRole",
+            else: "$userRole",
+          },
+        },
+      },
+    },
+    {
+      $project: {
+        assignedRole: 0,
+        userRole: 0,
+      },
+    },
+  ]);
+  // roleRecord = roleRecord[0] || null;
+  return roleRecord;
 };
 
 export const getPermissionsByRoleIdService = async (id) => {

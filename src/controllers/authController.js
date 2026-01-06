@@ -19,15 +19,15 @@ const RECAPTCHA_SECRET_KEY = process.env.RECAPTCHA_SECRET_KEY;
 
 // Verify reCAPTCHA token with Google
 const verifyRecaptchaToken = async (token) => {
-  console.log(
-    {
-      params: {
-        secret: RECAPTCHA_SECRET_KEY,
-        response: token,
-      },
-    },
-    "payload....."
-  );
+  // console.log(
+  //   {
+  //     params: {
+  //       secret: RECAPTCHA_SECRET_KEY,
+  //       response: token,
+  //     },
+  //   },
+  //   "payload....."
+  // );
   try {
     const response = await axios.post(
       "https://www.google.com/recaptcha/api/siteverify",
@@ -39,7 +39,7 @@ const verifyRecaptchaToken = async (token) => {
         },
       }
     );
-    console.log(response, "response.....");
+    // console.log(response, "response.....");
 
     return response.data;
   } catch (err) {
@@ -59,7 +59,7 @@ export const login = async (req, res) => {
         message: "reCAPTCHA token is required",
       });
     }
-    console.log(recaptchaToken, "recaptcha");
+    // console.log(recaptchaToken, "recaptcha");
 
     if (!socialId || !authenticationCode) {
       return sendErrorResponse({
@@ -70,7 +70,7 @@ export const login = async (req, res) => {
     }
 
     const recaptchaData = await verifyRecaptchaToken(recaptchaToken);
-    console.log(recaptchaData, "recaptchaData");
+    // console.log(recaptchaData, "recaptchaData");
 
     const RECAPTCHA_SCORE_THRESHOLD = 0.5;
 
@@ -92,7 +92,7 @@ export const login = async (req, res) => {
       requestfrom: "social",
     });
 
-    console.log("Login", data);
+    // console.log("Login", data);
 
     if (data?.code == 404 || data?.code == 400) {
       return sendErrorResponse({
@@ -144,7 +144,7 @@ export const login = async (req, res) => {
           assignedToSocialId: user.socialId,
           roleId: defaultUserRole._id,
         });
-
+        console.log("exists................", exists);
         if (!exists) {
           await UserRole.create({
             assignedToSocialId: user.socialId,
@@ -156,10 +156,12 @@ export const login = async (req, res) => {
         userRoles = await getUserRoleFromUserRolesService(user.socialId);
       }
     }
-
+    console.log("userRoles................", userRoles);
     // Filter only active user roles
-    const activeUserRoles = userRoles.filter((ur) => ur.isActive === true);
-    console.log(activeUserRoles, "activeUserRoles");
+    const activeUserRoles = userRoles.filter(
+      (ur) => ur.isActive === true || ur?.roleId?.name == "User"
+    );
+    // console.log(activeUserRoles, "activeUserRoles");
 
     if (activeUserRoles.length === 0) {
       return sendErrorResponse({

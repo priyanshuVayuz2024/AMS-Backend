@@ -7,10 +7,52 @@ export const checkModulePermission = (moduleName, action) => {
     try {
       const user = req.user;
 
-      const roleRecord = await UserRole.findOne({
-        assignedToSocialId: user.socialId,
-      }).populate("roleId");
-
+      // const roleRecordTemp = await UserRole.findOne({
+      //   assignedToSocialId: user.socialId,
+      // }).populate("roleId");
+      let roleRecord = await UserRole.aggregate([
+        {
+          $match: { assignedToSocialId: user.socialId },
+        },
+        {
+          $lookup: {
+            from: "roles",
+            localField: "roleId",
+            foreignField: "_id",
+            as: "assignedRole",
+          },
+        },
+        {
+          $lookup: {
+            from: "roles",
+            pipeline: [{ $match: { name: "User" } }],
+            as: "userRole",
+          },
+        },
+        { $unwind: "$assignedRole" },
+        { $unwind: "$userRole" },
+        {
+          $addFields: {
+            roleId: {
+              $cond: {
+                if: { $eq: ["$isActive", true] },
+                then: "$assignedRole",
+                else: "$userRole",
+              },
+            },
+          },
+        },
+        {
+          $project: {
+            assignedRole: 0,
+            userRole: 0,
+          },
+        },
+        {
+          $limit: 1,
+        },
+      ]);
+      roleRecord = roleRecord[0] || null;
       if (!roleRecord?.roleId) {
         return res.status(403).json({ message: "Role not assigned" });
       }
@@ -52,5 +94,3 @@ export const checkModulePermission = (moduleName, action) => {
     }
   };
 };
-
-
