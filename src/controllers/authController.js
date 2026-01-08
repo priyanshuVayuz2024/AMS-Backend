@@ -19,6 +19,15 @@ const RECAPTCHA_SECRET_KEY = process.env.RECAPTCHA_SECRET_KEY;
 // Verify reCAPTCHA token with Google
 
 const verifyRecaptchaToken = async (token) => {
+  // console.log(
+  //   {
+  //     params: {
+  //       secret: RECAPTCHA_SECRET_KEY,
+  //       response: token,
+  //     },
+  //   },
+  //   "payload....."
+  // );
   try {
     const params = new URLSearchParams();
     params.append('secret', process.env.RECAPTCHA_SECRET_KEY);
@@ -39,40 +48,41 @@ const verifyRecaptchaToken = async (token) => {
 
 
 export const login = async (req, res) => {
-
- try {
+  try {
     const { socialId, authenticationCode, recaptchaToken } = req.body;
 
     if (!recaptchaToken) {
       return sendErrorResponse({
         res,
         statusCode: 400,
-        message: 'reCAPTCHA token is required',
+        message: "reCAPTCHA token is required",
       });
     }
-    console.log(recaptchaToken,"recaptcha");
-    
+    // console.log(recaptchaToken, "recaptcha");
+
     if (!socialId || !authenticationCode) {
       return sendErrorResponse({
         res,
         statusCode: 400,
-        message: 'socialId and authenticationCode are required',
+        message: "socialId and authenticationCode are required",
       });
     }
 
     const recaptchaData = await verifyRecaptchaToken(recaptchaToken);
-    console.log(recaptchaData,"recaptchaData");
+    // console.log(recaptchaData, "recaptchaData");
 
     const RECAPTCHA_SCORE_THRESHOLD = 0.5;
 
-    if (!recaptchaData.success || recaptchaData.score < RECAPTCHA_SCORE_THRESHOLD) {
+    if (
+      !recaptchaData.success ||
+      recaptchaData.score < RECAPTCHA_SCORE_THRESHOLD
+    ) {
       return sendErrorResponse({
         res,
         statusCode: 403,
-        message: 'reCAPTCHA verification failed. Please try again.',
+        message: "reCAPTCHA verification failed. Please try again.",
       });
     }
-
 
     const { data } = await axios.post(PROFILE_BACKEND_URL, {
       adminlogin: false,
@@ -81,7 +91,7 @@ export const login = async (req, res) => {
       requestfrom: "social",
     });
 
-    console.log("Login", data);
+    // console.log("Login", data);
 
     if (data?.code == 404 || data?.code == 400) {
       return sendErrorResponse({
@@ -106,6 +116,7 @@ export const login = async (req, res) => {
       user.name = data.name || user.name;
       user.email = data.email || user.email;
       user.department = data.department || user.department;
+      user.profile_image = data.profile_image || user?.profile_image;
       user.syncedAt = new Date();
       await user.save();
     }
@@ -132,7 +143,7 @@ export const login = async (req, res) => {
           assignedToSocialId: user.socialId,
           roleId: defaultUserRole._id,
         });
-
+        console.log("exists................", exists);
         if (!exists) {
           await UserRole.create({
             assignedToSocialId: user.socialId,
@@ -144,11 +155,12 @@ export const login = async (req, res) => {
         userRoles = await getUserRoleFromUserRolesService(user.socialId);
       }
     }
-
+    console.log("userRoles................", userRoles);
     // Filter only active user roles
-    const activeUserRoles = userRoles.filter((ur) => ur.isActive === true);
-    console.log(activeUserRoles,"activeUserRoles");
-    
+    const activeUserRoles = userRoles.filter(
+      (ur) => ur.isActive === true || ur?.roleId?.name == "User"
+    );
+    // console.log(activeUserRoles, "activeUserRoles");
 
     if (activeUserRoles.length === 0) {
       return sendErrorResponse({
@@ -163,9 +175,10 @@ export const login = async (req, res) => {
 
     for (const ur of activeUserRoles) {
       // Extract roleId - handle both populated and non-populated cases
-      const roleIdValue = typeof ur.roleId === "object" ? ur.roleId._id : ur.roleId;
+      const roleIdValue =
+        typeof ur.roleId === "object" ? ur.roleId._id : ur.roleId;
       const roleId = roleIdValue.toString();
-      
+
       if (!roleMap.has(roleId)) {
         roleMap.set(roleId, {
           roleId: roleId,
@@ -217,8 +230,7 @@ export const login = async (req, res) => {
       // Filter modules to show only active ones
       role.modules = role.modules.filter((m) => m.module?.isActive === true);
     }
-    console.log(role,"role");
-    
+    console.log(role, "role");
 
     const isadmin = role.name.toLowerCase() === "admin" ? true : false;
 
@@ -240,6 +252,7 @@ export const login = async (req, res) => {
           email: user.email,
           socialId: user.socialId,
           department: user.department,
+          profileImage: user.profile_image,
         },
         role,
         isadmin,

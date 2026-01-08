@@ -1,5 +1,5 @@
 import express from "express";
-import dotenv from "dotenv";
+import "dotenv/config";
 import cors from "cors";
 import { connectDB } from "./src/config/db.js";
 
@@ -12,10 +12,13 @@ import roleRoutes from "./src/routes/roleRoutes.js";
 import roleAssignRoutes from "./src/routes/roleAssignRoutes.js";
 import assetAssignmentRoutes from "./src/routes/assetAssignmentRoutes.js";
 
-import { authLimiter, apiLimiter } from "./src/middlewares/rateLimiterMiddleware.js";
+import {
+  authLimiter,
+  apiLimiter,
+} from "./src/middlewares/rateLimiterMiddleware.js";
 import { errorHandler } from "./src/util/responseHandler.js";
 
-dotenv.config();
+// dotenv.config();
 
 const PORT = process.env.PORT || 5000;
 const app = express();
@@ -24,7 +27,6 @@ connectDB();
 
 app.use(cors());
 app.use(express.json());
-
 
 app.use("/api", apiLimiter);
 app.use("/api/auth", authLimiter, authRoutes);
