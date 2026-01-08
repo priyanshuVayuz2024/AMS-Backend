@@ -11,35 +11,32 @@ import mongoose from "mongoose";
 import { findRoleById } from "../repositories/roleRepo.js";
 import Role from "../models/RoleModel.js";
 import UserRole from "../models/UserRoleModel.js";
-
 const PROFILE_BACKEND_URL = "https://profilebackend.vayuz.com/users/api/signin";
 const JWT_SECRET = process.env.JWT_SECRET || "supersecretkey";
 const JWT_EXPIRY = "24h";
 const RECAPTCHA_SECRET_KEY = process.env.RECAPTCHA_SECRET_KEY;
 
 // Verify reCAPTCHA token with Google
+
 const verifyRecaptchaToken = async (token) => {
   try {
-    
+    const params = new URLSearchParams();
+    params.append('secret', process.env.RECAPTCHA_SECRET_KEY);
+    params.append('response', token);
+
     const response = await axios.post(
       'https://www.google.com/recaptcha/api/siteverify',
-      null,
-      {
-        params: {
-          secret: RECAPTCHA_SECRET_KEY,
-          response: token,
-        },
-      }
+      params
     );
-    console.log(response,"response");
-    
 
+    console.log('Google response:', response.data);
     return response.data;
   } catch (err) {
-    console.error('reCAPTCHA verification error:', err.message);
+    console.error('reCAPTCHA verification error:', err.response?.data || err.message);
     return { success: false };
   }
 };
+
 
 export const login = async (req, res) => {
 
